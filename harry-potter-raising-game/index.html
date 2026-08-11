@@ -305,6 +305,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
   <section id="screen-schedule">
     <div class="panel">
       <div class="panel-title" style="margin-bottom:0;">本 月 行 程（三旬）</div>
+      <div id="sched-note" style="display:none;text-align:center;font-size:12px;color:var(--ink-soft);padding:6px 10px 0;letter-spacing:.08em;"></div>
       <div class="slots">
         <div class="slot" id="slot-0"><small>上旬</small>—</div>
         <div class="slot" id="slot-1"><small>中旬</small>—</div>
@@ -568,16 +569,143 @@ function dumbledoreSVG(){
 </svg>`;
 }
 
+function hermioneSVG(){
+  const skin="#ffe3cf", hair="#6b452a";
+  return `
+<svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="妙麗立繪">
+  <!-- 蓬鬆棕髮 -->
+  <ellipse cx="100" cy="88" rx="52" ry="58" fill="${hair}"/>
+  <circle cx="56" cy="110" r="16" fill="${hair}"/><circle cx="144" cy="110" r="16" fill="${hair}"/>
+  <circle cx="60" cy="140" r="14" fill="${hair}"/><circle cx="140" cy="140" r="14" fill="${hair}"/>
+  <circle cx="66" cy="166" r="12" fill="${hair}"/><circle cx="134" cy="166" r="12" fill="${hair}"/>
+  <path d="M40,240 Q44,184 78,166 L100,178 L122,166 Q156,184 160,240 Z" fill="#23232e" stroke="#000" stroke-width="1.5"/>
+  <path d="M78,166 L100,178 L122,166 L118,160 L100,170 L82,160 Z" fill="#f5efe2"/>
+  <path d="M96,178 L104,178 L105,208 L100,214 L95,208 Z" fill="#7f0909"/>
+  <path d="M96,186 L104,186 L104,191 L96,191 Z" fill="#d4a017"/>
+  <rect x="92" y="130" width="16" height="16" fill="#f3c9ae"/>
+  <path d="M68,88 Q68,50 100,50 Q132,50 132,88 Q132,116 100,132 Q68,116 68,88 Z" fill="${skin}"/>
+  <ellipse cx="84" cy="98" rx="9" ry="10.5" fill="#fff"/><ellipse cx="116" cy="98" rx="9" ry="10.5" fill="#fff"/>
+  <ellipse cx="84" cy="99" rx="5.5" ry="8" fill="#7a4a22"/><ellipse cx="116" cy="99" rx="5.5" ry="8" fill="#7a4a22"/>
+  <circle cx="81" cy="95" r="2" fill="#fff"/><circle cx="113" cy="95" r="2" fill="#fff"/>
+  <path d="M75,90 Q84,84 93,90 M107,90 Q116,84 125,90" stroke="${hair}" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+  <path d="M100,110 Q102,114 99,116" stroke="#f3c9ae" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M93,123 Q100,128 107,123" stroke="#c46a55" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M64,92 Q60,54 84,46 Q100,40 116,46 Q140,54 136,92 L128,86 Q130,58 100,52 Q70,58 72,86 Z" fill="${hair}"/>
+  <ellipse cx="74" cy="112" rx="5" ry="3" fill="#f7a8a0" opacity=".5"/><ellipse cx="126" cy="112" rx="5" ry="3" fill="#f7a8a0" opacity=".5"/>
+</svg>`;
+}
+function ronSVG(){
+  const skin="#ffe0c4", hair="#c25a2a";
+  return `
+<svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="榮恩立繪">
+  <path d="M40,240 Q44,184 78,166 L100,178 L122,166 Q156,184 160,240 Z" fill="#23232e" stroke="#000" stroke-width="1.5"/>
+  <path d="M78,166 L100,178 L122,166 L118,160 L100,170 L82,160 Z" fill="#f5efe2"/>
+  <path d="M96,178 L104,178 L105,208 L100,214 L95,208 Z" fill="#7f0909"/>
+  <path d="M96,186 L104,186 L104,191 L96,191 Z" fill="#d4a017"/>
+  <rect x="92" y="130" width="16" height="16" fill="#f0c39f"/>
+  <path d="M66,88 Q66,50 100,50 Q134,50 134,88 Q134,118 100,134 Q66,118 66,88 Z" fill="${skin}"/>
+  <ellipse cx="64" cy="96" rx="5" ry="8" fill="${skin}"/><ellipse cx="136" cy="96" rx="5" ry="8" fill="${skin}"/>
+  <ellipse cx="84" cy="99" rx="8" ry="9" fill="#fff"/><ellipse cx="116" cy="99" rx="8" ry="9" fill="#fff"/>
+  <ellipse cx="84" cy="100" rx="4.5" ry="6.5" fill="#3f6ea8"/><ellipse cx="116" cy="100" rx="4.5" ry="6.5" fill="#3f6ea8"/>
+  <circle cx="81" cy="96" r="1.8" fill="#fff"/><circle cx="113" cy="96" r="1.8" fill="#fff"/>
+  <path d="M76,92 Q84,88 92,92 M108,92 Q116,88 124,92" stroke="${hair}" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <circle cx="76" cy="112" r="1.2" fill="#d99a6a"/><circle cx="82" cy="115" r="1.2" fill="#d99a6a"/><circle cx="88" cy="112" r="1.2" fill="#d99a6a"/>
+  <circle cx="112" cy="112" r="1.2" fill="#d99a6a"/><circle cx="118" cy="115" r="1.2" fill="#d99a6a"/><circle cx="124" cy="112" r="1.2" fill="#d99a6a"/>
+  <path d="M100,108 Q102,113 99,115" stroke="#e8b58c" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M92,123 Q100,130 108,123" stroke="#c46a55" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <path d="M62,90 Q58,48 100,42 Q142,48 138,90 L130,84 L124,64 L116,80 L104,60 L94,80 L82,62 L74,82 L70,86 Z" fill="${hair}"/>
+</svg>`;
+}
+function dracoSVG(){
+  const skin="#f7e4d3", hair="#e6e2cf";
+  return `
+<svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="馬份立繪">
+  <path d="M40,240 Q44,184 78,166 L100,178 L122,166 Q156,184 160,240 Z" fill="#17171e" stroke="#000" stroke-width="1.5"/>
+  <path d="M78,166 L100,178 L122,166 L118,160 L100,170 L82,160 Z" fill="#f5efe2"/>
+  <path d="M96,178 L104,178 L105,208 L100,214 L95,208 Z" fill="#0f3d29"/>
+  <path d="M96,186 L104,186 L104,191 L96,191 Z" fill="#b9c4c9"/>
+  <rect x="92" y="130" width="16" height="16" fill="#ecd2ba"/>
+  <path d="M66,88 Q66,50 100,50 Q134,50 134,88 Q134,116 100,132 Q66,116 66,88 Z" fill="${skin}"/>
+  <ellipse cx="84" cy="99" rx="8" ry="8.5" fill="#fff"/><ellipse cx="116" cy="99" rx="8" ry="8.5" fill="#fff"/>
+  <ellipse cx="84" cy="100" rx="4.5" ry="6" fill="#8a94a6"/><ellipse cx="116" cy="100" rx="4.5" ry="6" fill="#8a94a6"/>
+  <path d="M75,93 Q84,89 93,94 M107,94 Q116,89 125,93" stroke="#cfc9b2" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+  <path d="M100,108 Q102,113 99,115" stroke="#e0c3a6" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M92,124 Q100,126 108,121" stroke="#b0705c" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <path d="M62,86 Q60,44 100,42 Q140,44 138,86 L130,78 Q132,54 100,50 Q68,54 70,78 Z" fill="${hair}"/>
+  <path d="M70,78 Q86,60 130,64 L128,58 Q90,52 70,72 Z" fill="#d6d0ba"/>
+</svg>`;
+}
+function lunaSVG(){
+  const skin="#fdeadb", hair="#eadfae";
+  return `
+<svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="露娜立繪">
+  <path d="M58,84 Q42,170 52,232 L72,226 Q60,160 68,96 Z M142,84 Q158,170 148,232 L128,226 Q140,160 132,96 Z" fill="${hair}"/>
+  <ellipse cx="100" cy="82" rx="46" ry="50" fill="${hair}"/>
+  <path d="M40,240 Q44,184 78,166 L100,178 L122,166 Q156,184 160,240 Z" fill="#23232e" stroke="#000" stroke-width="1.5"/>
+  <path d="M78,166 L100,178 L122,166 L118,160 L100,170 L82,160 Z" fill="#f5efe2"/>
+  <path d="M96,178 L104,178 L105,208 L100,214 L95,208 Z" fill="#1d3a6e"/>
+  <path d="M96,186 L104,186 L104,191 L96,191 Z" fill="#8a5a2b"/>
+  <rect x="92" y="130" width="16" height="16" fill="#f5d4bc"/>
+  <path d="M68,88 Q68,52 100,52 Q132,52 132,88 Q132,116 100,132 Q68,116 68,88 Z" fill="${skin}"/>
+  <ellipse cx="84" cy="99" rx="10" ry="11" fill="#fff"/><ellipse cx="116" cy="99" rx="10" ry="11" fill="#fff"/>
+  <ellipse cx="84" cy="100" rx="6" ry="8.5" fill="#a8bfd4"/><ellipse cx="116" cy="100" rx="6" ry="8.5" fill="#a8bfd4"/>
+  <circle cx="81" cy="95" r="2.4" fill="#fff"/><circle cx="113" cy="95" r="2.4" fill="#fff"/>
+  <path d="M74,89 Q84,85 94,89 M106,89 Q116,85 126,89" stroke="#d3c68f" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <path d="M100,110 Q101,114 99,116" stroke="#f0cfae" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M94,123 Q100,127 106,123" stroke="#c98a75" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M64,90 Q60,48 100,46 Q140,48 136,90 L128,84 Q130,56 100,52 Q70,56 72,84 Z" fill="${hair}"/>
+  <!-- 蘿蔔耳環 -->
+  <path d="M65,110 L67,120 L63,120 Z" fill="#e8875f"/><path d="M135,110 L137,120 L133,120 Z" fill="#e8875f"/>
+</svg>`;
+}
+function hagridSVG(){
+  const skin="#e8b98c", hair="#3d2c1c";
+  return `
+<svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="海格立繪">
+  <path d="M28,240 Q34,170 70,152 L100,164 L130,152 Q166,170 172,240 Z" fill="#4a3826" stroke="#2c2014" stroke-width="2"/>
+  <ellipse cx="100" cy="70" rx="54" ry="46" fill="${hair}"/>
+  <path d="M52,80 Q40,160 56,200 L144,200 Q160,160 148,80 Z" fill="${hair}"/>
+  <path d="M70,74 Q70,52 100,52 Q130,52 130,74 Q130,92 100,98 Q70,92 70,74 Z" fill="${skin}"/>
+  <path d="M66,84 Q60,150 100,168 Q140,150 134,84 Q126,110 100,116 Q74,110 66,84 Z" fill="#54402a"/>
+  <path d="M72,80 Q82,72 92,80 M108,80 Q118,72 128,80" stroke="${hair}" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <circle cx="84" cy="86" r="3.6" fill="#26200f"/><circle cx="116" cy="86" r="3.6" fill="#26200f"/>
+  <ellipse cx="100" cy="98" rx="8" ry="6.5" fill="#d9a06c"/>
+  <path d="M90,112 Q100,118 110,112" stroke="#2c2014" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+</svg>`;
+}
+function voldemortSVG(){
+  const skin="#e4ece2";
+  return `
+<svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="佛地魔立繪">
+  <path d="M30,240 Q34,140 64,84 Q80,40 100,40 Q120,40 136,84 Q166,140 170,240 Z" fill="#0c0f12" stroke="#000" stroke-width="2"/>
+  <path d="M68,92 Q68,54 100,54 Q132,54 132,92 Q132,120 100,136 Q68,120 68,92 Z" fill="${skin}"/>
+  <path d="M126,98 Q128,116 100,132 Q116,120 120,100 Z" fill="#c4d2c2" opacity=".6"/>
+  <path d="M76,92 L94,96 M124,92 L106,96" stroke="#3a1114" stroke-width="3" stroke-linecap="round"/>
+  <path d="M82,101 Q86,98 92,101 Q88,105 82,101 Z" fill="#a3241f"/>
+  <path d="M108,101 Q112,98 118,101 Q114,105 108,101 Z" fill="#a3241f"/>
+  <circle cx="87" cy="101" r="1.4" fill="#2c0a0a"/><circle cx="113" cy="101" r="1.4" fill="#2c0a0a"/>
+  <path d="M97,112 L99,116 M103,112 L101,116" stroke="#9aa898" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M90,126 Q100,124 110,126" stroke="#7d8c7b" stroke-width="2" fill="none" stroke-linecap="round"/>
+</svg>`;
+}
+
 const FACES = {
   hally: () => hallySVG(stageOf(), S.house || "gryffindor"),
   snape: snapeSVG,
   hat: hatSVG,
   dumbledore: dumbledoreSVG,
+  hermione: hermioneSVG,
+  ron: ronSVG,
+  draco: dracoSVG,
+  luna: lunaSVG,
+  hagrid: hagridSVG,
+  voldemort: voldemortSVG,
   none: () => "",
 };
 const SPEAKER = {
   hally:"哈莉", snape:"石內卜", hat:"分類帽", dumbledore:"鄧不利多", none:"",
-  narr:"", voldemort:"？？？",
+  narr:"", voldemort:"佛地魔", hermione:"妙麗", ron:"榮恩", draco:"馬份",
+  luna:"露娜", hagrid:"海格",
 };
 
 /* ============================================================
@@ -681,18 +809,20 @@ function showToast(msg){
    活動定義（每旬執行一次；正值 = 成長，壓力另計）
 ============================================================ */
 const ACTIVITIES = [
-  {id:"potion",  name:"魔藥學",       cost:30, gains:{knowledge:9, magic:3, stress:6, snape:3},
+  {id:"potion",  name:"魔藥學",       cost:30, cls:true, gains:{knowledge:9, magic:3, stress:6, snape:3},
     desc:"石內卜教授親自指導。嚴格，但學得紮實。"},
-  {id:"charms",  name:"符咒學",       cost:30, gains:{magic:9, knowledge:3, stress:5},
+  {id:"charms",  name:"符咒學",       cost:30, cls:true, gains:{magic:9, knowledge:3, stress:5},
     desc:"孚立維教授的課。羽毛飄浮，是魔法的基本功。"},
-  {id:"dada",    name:"黑魔法防禦術", cost:35, gains:{magic:6, courage:7, stress:7},
+  {id:"dada",    name:"黑魔法防禦術", cost:35, cls:true, gains:{magic:6, courage:7, stress:7},
     desc:"面對黑魔法的實戰訓練，稍微累人。"},
-  {id:"transf",  name:"變形學",       cost:35, gains:{knowledge:6, magic:6, stress:7},
+  {id:"transf",  name:"變形學",       cost:35, cls:true, gains:{knowledge:6, magic:6, stress:7},
     desc:"麥教授的課，一絲不苟。火柴變成針！"},
-  {id:"flying",  name:"飛行訓練",     cost:25, gains:{fitness:9, courage:4, stress:6},
+  {id:"flying",  name:"飛行訓練",     cost:25, cls:true, gains:{fitness:9, courage:4, stress:6},
     desc:"騎上掃帚翱翔天際，鍛鍊體能與膽量。"},
-  {id:"dance",   name:"禮儀與舞蹈",   cost:40, gains:{charm:9, stress:5},
+  {id:"dance",   name:"禮儀與舞蹈",   cost:40, cls:true, gains:{charm:9, stress:5},
     desc:"淑女養成課程。石內卜嗤之以鼻，但沒有阻止。"},
+  {id:"tutor",   name:"教授特訓",     cost:0,  months:[7,8], gains:{magic:7, knowledge:7, snape:4, stress:7},
+    desc:"暑假限定。蜘蛛尾巷的地下室裡，一對一的魔藥與決鬥課。"},
   {id:"library", name:"圖書館自習",   cost:0,  gains:{knowledge:6, magic:2, stress:4},
     desc:"免費。安靜的午後與成堆的書。"},
   {id:"restrict",name:"禁書區夜讀",   cost:0,  gains:{magic:11, knowledge:4, dark:5, stress:8},
@@ -844,7 +974,20 @@ function openSchedule(){
 function scheduledCost(){
   return S.schedule.reduce((t,id)=>t + Math.max(0, ACT_BY_ID[id].cost), 0);
 }
+// 6月＝期末考月、7-8月＝暑假：課程停開
+function actBlockReason(a, month){
+  if(a.cls && month === 6) return "期末考月停課";
+  if(a.cls && (month === 7 || month === 8)) return "暑假停課";
+  if(a.months && !a.months.includes(month)) return "暑假限定";
+  return null;
+}
 function renderSchedule(){
+  const {month} = dateOf(S.monthIndex);
+  const note = month === 6 ? "六月是期末考月，所有課程停課——考前衝刺還是放鬆，自己拿捏。"
+             : (month === 7 || month === 8) ? "暑假！課程停開，但蜘蛛尾巷有「教授特訓」可以上。"
+             : "";
+  $("sched-note").textContent = note;
+  $("sched-note").style.display = note ? "" : "none";
   for(let i=0;i<3;i++){
     const el = $("slot-"+i);
     const id = S.schedule[i];
@@ -854,13 +997,14 @@ function renderSchedule(){
   const box = $("ui-acts");
   box.innerHTML = "";
   ACTIVITIES.forEach(a=>{
+    const blocked = actBlockReason(a, month);
     const full = S.schedule.length >= 3;
     const cantAfford = a.cost > 0 && (scheduledCost() + a.cost) > S.money;
     const b = document.createElement("button");
     b.className = "act";
-    b.disabled = full || cantAfford;
-    const costTxt = a.cost > 0 ? `−${a.cost}G` : a.cost < 0 ? `＋${-a.cost}G` : "免費";
-    const costCls = a.cost > 0 ? "pay" : a.cost < 0 ? "earn" : "";
+    b.disabled = !!blocked || full || cantAfford;
+    const costTxt = blocked ? blocked : a.cost > 0 ? `−${a.cost}G` : a.cost < 0 ? `＋${-a.cost}G` : "免費";
+    const costCls = blocked ? "" : a.cost > 0 ? "pay" : a.cost < 0 ? "earn" : "";
     b.innerHTML = `<div class="a-name">${a.name}<span class="a-cost ${costCls}">${costTxt}</span></div>
                    <div class="a-desc">${a.desc}</div>`;
     b.onclick = ()=>{ S.schedule.push(a.id); renderSchedule(); };
@@ -938,12 +1082,14 @@ function endOfMonth(actIds){
 
   // 固定月事件
   const {month} = dateOf(S.monthIndex);
+  const bigEv = (month === 5) ? BIG_EVENTS[schoolYearOf()] : null;
+  if(bigEv) chain.push(bigEv);
   if(month === 6) chain.push(evExam);
   if(month === 12) chain.push(evChristmas);
   if(month === 7) chain.push(evBirthday);
 
-  // 隨機事件
-  if(chain.length === 0 || Math.random() < 0.35){
+  // 隨機事件（主線大事件的月份不再插入）
+  if(!bigEv && (chain.length === 0 || Math.random() < 0.35)){
     const ev = pickRandomEvent();
     if(ev) chain.push(ev);
   }
@@ -1057,8 +1203,42 @@ const RANDOM_EVENTS = [
   {id:"hermione", once:true, cond:()=>true, fn(next){
     say([
       {who:"narr", text:"圖書館裡，一個蓬鬆棕髮的女孩抱著十本書坐到哈莉對面。"},
-      {who:"hally", text:"（她叫妙麗·格蘭傑。從此，讀書的日子不再孤單。）"},
+      {who:"hermione", text:"你的變形學筆記漏了三個重點。……要一起讀嗎？我叫妙麗·格蘭傑。"},
+      {who:"hally", text:"（從此，讀書的日子不再孤單。）"},
     ], ()=>{ applyGains({knowledge:6, charm:3, stress:-6}, true); S.flags.metHermione=true; next(); });
+  }},
+  {id:"hermione-study", cond:()=>S.flags.metHermione, fn(next){
+    say([
+      {who:"hermione", text:"考前重點我整理成三種顏色了！紅色是必考、藍色是可能考、綠色是「教授心情不好時會考」。"},
+      {who:"hally", text:"綠色那疊怎麼比紅色還厚啊……"},
+    ], ()=>{ applyGains({knowledge:7, stress:4}, true); next(); });
+  }},
+  {id:"ron-chess", cond:()=>true, fn(next){
+    say([
+      {who:"ron", text:"巫師棋，來一盤？先說好，我可是從來沒輸過——輸的人請奶油啤酒！"},
+      {who:"narr", text:"棋盤上殺得天昏地暗。榮恩的騎士砸碎了哈莉最後的城堡——但交誼廳的爐火旁，笑聲一直沒停。"},
+    ], ()=>{ applyGains({knowledge:3, stress:-10, charm:2}, true); next(); });
+  }},
+  {id:"draco-taunt", cond:()=>true, fn(next){
+    say([
+      {who:"draco", text:"喲，這不是石內卜教授的小跟班嗎？聽說你的零用錢是用坩堝刷出來的？",
+        choices:[
+          {label:"優雅地反擊", then:[
+            {who:"hally", text:"至少我的零用錢是自己賺的，馬份。你的呢——爸爸這週匯了嗎？"},
+            {who:"narr", text:"圍觀的學生哄堂大笑。馬份漲紅著臉走了。"},
+          ], effect:{charm:6, courage:3}},
+          {label:"拔杖決鬥", then:[
+            {who:"narr", text:"走廊上咒光交錯！哈莉的繳械咒把馬份的魔杖打飛出去——但巡邏的黑袍身影正好轉過轉角。"},
+            {who:"snape", text:"兩位，各扣二十分。波特，握杖的手腕姿勢不錯。……我什麼都沒說。"},
+          ], effect:{magic:6, courage:5, snape:-3, stress:4}},
+        ]},
+    ], next);
+  }},
+  {id:"luna-walk", cond:()=>schoolYearOf()>=2, fn(next){
+    say([
+      {who:"luna", text:"你頭頂上繞著好多騷擾虻呢。牠們最喜歡鑽進煩惱太多的腦袋了。\n跟我去餵騎士墜鬼馬吧，牠們只讓見過悲傷的人看見——牠們很溫柔喔。"},
+      {who:"narr", text:"禁忌森林邊，看不見的鬃毛從指尖滑過。不知道為什麼，心裡的重量輕了一些。"},
+    ], ()=>{ applyGains({stress:-14, dark:-4, courage:2}, true); next(); });
   }},
   {id:"quidditch", once:true, cond:()=>S.stats.fitness>=120 && schoolYearOf()>=2, fn(next){
     say([
@@ -1088,8 +1268,9 @@ const RANDOM_EVENTS = [
   }},
   {id:"hagrid", cond:()=>true, fn(next){
     say([
-      {who:"narr", text:"海格邀請哈莉到小屋喝茶。岩皮餅硬得能砸暈山怪，但爐火很暖。"},
-      {who:"hally", text:"海格說，我的眼睛跟媽媽一模一樣。……教授也這麼說過，只說過一次。"},
+      {who:"hagrid", text:"哈莉！來來來，剛烤好的岩皮餅——小心牙。牙床骨還是要的嘛。"},
+      {who:"hagrid", text:"你這雙眼睛啊，跟你媽媽一模一樣。莉莉當年最疼我這些小動物了。"},
+      {who:"hally", text:"（教授也這麼說過。只說過一次。）"},
     ], ()=>{ applyGains({stress:-12, courage:3}, true); next(); });
   }},
   {id:"potion-quiz", cond:()=>true, fn(next){
@@ -1106,7 +1287,7 @@ const RANDOM_EVENTS = [
   }},
   {id:"dream", cond:()=>S.stats.dark>=120, fn(next){
     say([
-      {who:"voldemort", text:"（夢裡，一個冰冷的聲音貼著耳際低語——）\n力量……你渴望力量,不是嗎?疤痕連接著我們,女孩……",
+      {who:"voldemort", name:"？？？", text:"（夢裡，一個冰冷的聲音貼著耳際低語——）\n力量……你渴望力量,不是嗎?疤痕連接著我們,女孩……",
         choices:[
           {label:"掙脫夢境", then:[
             {who:"hally", text:"滾出我的腦袋！！"},
@@ -1145,6 +1326,144 @@ const RANDOM_EVENTS = [
     ], ()=>{ applyGains({charm:12, stress:-8, snape:5}, true); next(); });
   }},
 ];
+/* ============================================================
+   學年主線大事件（每學年 5 月觸發）
+============================================================ */
+const BIG_EVENTS = {
+  1(next){ // 魔法石
+    const pass = S.stats.courage + S.stats.magic >= 120;
+    say([
+      {who:"narr", text:"【第一學年・魔法石】\n學年將盡。哈莉發現奇洛教授深夜潛向三樓禁區——藏在活板門下的魔法石，有危險！"},
+      {who:"hermione", text:"哈莉，魔鬼網、飛行鑰匙、巫師棋……那些機關不是一個人能過的！"},
+      {who:"ron", text:"怕什麼，棋我來下！要去就一起去！",
+        choices:[
+          {label:"三人闖入機關", then: pass ? [
+            {who:"narr", text:"魔鬼網、飛天鑰匙、真人巫師棋——三人聯手闖過重重機關！\n最深處，哈莉在意若思鏡前擋下了奇洛，額頭的疤痕灼痛如火，附身的黑影尖嘯著潰散……"},
+            {who:"snape", text:"（醒來時，醫療翼的床邊放著一杯還溫熱的熱可可。）\n擅闖禁區，扣分。以及……做得不錯。這句話我只說一次。"},
+          ] : [
+            {who:"narr", text:"機關太險了。哈莉在最後一關被奇洛擊倒，眼前發黑的瞬間——一片黑袍破門而入。"},
+            {who:"snape", text:"我從一開始就在盯著奇洛。你們三個，膽子比腦子大。\n（他的手在發抖。整整一夜，他守在醫療翼沒有離開。）"},
+          ], effect: pass ? {courage:12, magic:8, stress:10, snape:6} : {courage:6, stress:16, snape:8}},
+          {label:"先報告石內卜", then:[
+            {who:"snape", text:"……很好。你終於學會了「在送死之前先動腦」。\n（當晚，奇洛在禁區被石內卜與鄧不利多攔下，附身的黑影倉皇遁逃。）"},
+            {who:"dumbledore", text:"石頭已經銷毀了。哈莉，你的判斷救了你的朋友——有時候，忍住不當英雄才是真正的勇氣。"},
+          ], effect:{snape:10, knowledge:5, courage:3}},
+        ]},
+    ], next);
+  },
+  2(next){ // 密室
+    const pass = S.stats.magic >= 150;
+    say([
+      {who:"narr", text:"【第二學年・消失的密室】\n牆上出現血字：「密室已開」。學生接連被石化，而哈莉聽得見牆壁裡的嘶嘶低語——\n她會說爬說語。全校的目光都變了。"},
+      {who:"draco", text:"聽說話蛇的波特就是繼承人？哈，我一點都不意外。"},
+      {who:"snape", text:"別理那些蠢話。聽得懂蛇語不代表你是怪物——語言沒有善惡，使用它的人才有。",
+        choices:[
+          {label:"循聲潛入密室", then: pass ? [
+            {who:"narr", text:"浴室的水管深處——巨大的蛇妖昂起頭顱！\n鳳凰佛客使啄瞎了蛇妖的雙眼，分類帽落下一柄銀劍。哈莉閉著眼揮出致命一擊！"},
+            {who:"snape", text:"劍上有蛇妖毒液，站著別動。\n（解毒劑早已備好——他研究石化事件的筆記，厚得像一本書。）"},
+          ] : [
+            {who:"narr", text:"蛇妖的目光擦過水面倒影，哈莉僵在原地動彈不得——千鈞一髮之際，鳳凰的火焰吞沒了通道，把她拖回了地面。"},
+            {who:"snape", text:"下一次想單挑千年蛇妖之前，先把召喚咒學好。\n……活著回來就好。"},
+          ], effect: pass ? {courage:12, magic:10, dark:4, stress:12} : {courage:8, stress:16, snape:5}},
+          {label:"和教授一起追查", then:[
+            {who:"narr", text:"師徒二人翻遍校史：五十年前的「繼承人」、被冤枉的海格、藏在日記裡的黑魔法……\n魔蘋果復甦劑熬成那天，所有石化的學生都醒了過來。"},
+            {who:"snape", text:"日記已經燒了。記住這一課：黑魔王的東西，會說話的，尤其不能信。"},
+          ], effect:{knowledge:10, snape:8, magic:4}},
+        ]},
+    ], next);
+  },
+  3(next){ // 催狂魔與教父
+    const pass = S.stats.magic >= 200;
+    say([
+      {who:"narr", text:"【第三學年・催狂魔的寒冬】\n逃犯天狼星·布萊克越獄了——傳聞他是背叛哈莉父母的兇手，也是她的教父。\n催狂魔包圍了學校，每次靠近，哈莉都會聽見母親最後的尖叫。"},
+      {who:"snape", text:"布萊克的事，你不需要知道。\n（提起那個名字時，他的表情是哈莉從未見過的冰冷。）",
+        choices:[
+          {label:"拜託教授教護法咒", then: pass ? [
+            {who:"narr", text:"「想著最幸福的記憶。」深夜的教室裡，哈莉一次次舉杖——\n第七夜，一頭銀色的牝鹿自杖尖躍出，照亮了整間教室。石內卜怔在原地，久久沒有說話。"},
+            {who:"snape", text:"……牝鹿。\n（「和她的一模一樣。」這句話，他終究只在心裡說完。）練得不錯。"},
+          ] : [
+            {who:"narr", text:"銀霧一次次在杖尖散開，成不了形。哈莉癱坐在地上，又冷又挫敗。"},
+            {who:"snape", text:"護法咒是高階魔法，成不了形不丟人。\n喝了這杯熱可可——對付催狂魔，巧克力和咒語一樣有效。慢慢來。"},
+          ], effect: pass ? {magic:14, courage:10, snape:8, stress:6} : {magic:6, snape:6, stress:8}},
+          {label:"追問父母的過去", then:[
+            {who:"snape", text:"……你母親是我這輩子見過最好的人。她會為陌生人挺身而出，笑起來的時候，連魔藥教室都亮了。\n你父親——哼。總之，真相是：背叛他們的另有其人。布萊克那筆帳，學期結束前會算清楚。"},
+            {who:"narr", text:"學期末，真相大白：老鼠才是叛徒，教父天狼星洗清了冤屈。\n他寄來的第一封信裡寫著：「莉莉的女兒，被那個石內卜養得……好吧，我不得不承認，養得不錯。」"},
+          ], effect:{snape:12, courage:5, stress:-5, dark:-5}},
+        ]},
+    ], next);
+  },
+  4(next){ // 火盃與墓園
+    say([
+      {who:"narr", text:"【第四學年・火盃的背叛】\n三巫鬥法大賽——不該出現的第四張字條從火盃中飛出：「哈莉·波特」。\n龍、黑湖、迷宮……最後的獎盃是一個港口鑰。墓園裡，大釜沸騰——"},
+      {who:"voldemort", text:"接骨、還肉、取血——\n瞧啊，我的食死人們。「活下來的女孩」，親手為我獻上了重生之血。"},
+      {who:"narr", text:"閃電疤痕痛如刀割。哈莉拚死抓回港口鑰逃離墓園，把噩耗帶回了霍格華茲——黑魔王，回來了。"},
+      {who:"snape", text:"（他捲起左袖，黑魔標記在皮膚上灼燒發亮。）\n聽好，哈莉。從今晚起，我要回到他身邊——當鄧不利多的間諜。",
+        choices:[
+          {label:"「我相信您。」", then:[
+            {who:"snape", text:"…………好。\n（他停頓了很久。）這世上肯對我說這三個字的人，一隻手數得完。\n無論你聽見外面怎麼說我——記住今晚。"},
+          ], effect:{snape:14, courage:8, magic:10, stress:14, dark:4}},
+          {label:"「太危險了，不要去！」", then:[
+            {who:"snape", text:"戰爭裡沒有安全的位置，只有值得的位置。\n我把解毒劑全部留在你房間了。每一種。……照顧好自己，等我回來檢查你的魔藥筆記。"},
+          ], effect:{snape:10, courage:10, magic:10, stress:16, dark:5}},
+        ]},
+    ], next);
+  },
+  5(next){ // 神秘部門
+    const pass = S.stats.charm + S.stats.courage >= 350;
+    say([
+      {who:"narr", text:"【第五學年・神秘部門之戰】\n魔法部拒絕承認黑魔王復活，粉紅色的督察掌控了學校。哈莉在有求必應屋裡，偷偷訓練著一支學生軍——「鄧不利多的軍隊」。"},
+      {who:"luna", text:"別擔心。被全世界當成騙子的滋味我很熟——反正星星知道我們是對的。"},
+      {who:"narr", text:"六月，疤痕傳來劇痛的幻象：教父在神秘部門受困！",
+        choices:[
+          {label:"率領 D.A. 馳援", then: pass ? [
+            {who:"narr", text:"六名學生騎著騎士墜鬼馬直闖魔法部！預言廳裡咒光交錯，哈莉的指揮沉著得不像十五歲——撐到鳳凰會趕到，無人重傷。\n預言當眾碎裂，魔法部再也無法否認：黑魔王回來了。"},
+            {who:"snape", text:"是我通知的鳳凰會。你留下的暗號很聰明。\n……帶著朋友全身而退，這份指揮，我給及格。遠超及格。"},
+          ] : [
+            {who:"narr", text:"神秘部門的陷阱比想像中深。混戰中朋友接連負傷，直到鳳凰會破門而入才穩住戰局——每個人都活著，但代價沉重。"},
+            {who:"snape", text:"衝動是他最擅長利用的東西。這一課很痛，記住它。\n（醫療翼裡，他一張床一張床地放下自己熬的藥。）"},
+          ], effect: pass ? {charm:12, courage:12, magic:8, stress:12} : {courage:8, stress:18, dark:5, snape:5}},
+          {label:"用鎖心術驗證幻象", then:[
+            {who:"narr", text:"「清空思緒。分辨真偽。」——教授教的鎖心術起了作用。\n哈莉識破了幻象裡的破綻，把消息傳給鳳凰會。陷阱撲空，教父毫髮無傷。"},
+            {who:"snape", text:"黑魔王第一次在你身上栽了跟頭。\n他會惱羞成怒——而這正是間諜最好的掩護。幹得漂亮。"},
+          ], effect:{knowledge:10, magic:10, snape:12, dark:-6}},
+        ]},
+    ], next);
+  },
+  6(next){ // 混血王子
+    say([
+      {who:"narr", text:"【第六學年・混血王子】\n魔藥教室的舊櫃子裡，哈莉翻到一本寫滿註記的《高階魔藥製作》，扉頁署名——「混血王子」。\n改良的配方、自創的咒語……這字跡，她從小看到大。"},
+      {who:"hally", text:"教授。「混血王子」……是您，對吧。\n這一頁的邊角，畫了一朵小小的百合花。"},
+      {who:"snape", text:"……莉莉·伊凡。你的母親。我們九歲就認識，在同一條河邊長大。\n後來我說錯了一句話，一句蠢到不可饒恕的話，失去了她。再後來——我失去她第二次。"},
+      {who:"snape", text:"那晚鄧不利多問我要什麼，我說：保護她的女兒。\n十六年了。這件事，是我唯一沒有做錯的事。",
+        choices:[
+          {label:"「為什麼從不告訴我？」", then:[
+            {who:"snape", text:"因為我怕你知道了，就只把我當成「欠你母親的人」。\n……而不是把蜘蛛尾巷，當成家。"},
+            {who:"hally", text:"教授。蜘蛛尾巷的蛋糕、退燒藥、還有每年聖誕的禮物——那些不是虧欠。\n那是我的家。一直都是。"},
+          ], effect:{snape:16, stress:-8, dark:-5}},
+          {label:"什麼也不說，抱住他", then:[
+            {who:"narr", text:"黑袍僵了整整三秒，然後，一隻手輕輕落在她的頭頂——像很多年前，她發燒的那些夜晚一樣。"},
+            {who:"snape", text:"……好了。眼淚擦掉。\n混血王子的筆記，從明天起，我一頁一頁教你。"},
+          ], effect:{snape:16, magic:8, stress:-10}},
+        ]},
+    ], next);
+  },
+  7(next){ // 大戰前夕
+    say([
+      {who:"narr", text:"【第七學年・大戰前夕】\n戰爭的陰影籠罩魔法界。霍格華茲的最後一個五月，石內卜把哈莉叫進辦公室，桌上放著一個小小的水晶瓶——銀白色的記憶在裡面流轉。"},
+      {who:"snape", text:"我的記憶。關於你母親，關於我的誓言，關於這十七年。\n如果大戰之後我不在了——看完它，然後替我活得理直氣壯。"},
+      {who:"hally", text:"收回去。您要親口講給我聽——在戰後的蜘蛛尾巷，配一壺熱可可。",
+        choices:[
+          {label:"「戰後，我們回家。」", then:[
+            {who:"snape", text:"……好。\n（他收回水晶瓶的手，握得很緊。）一言為定，哈莉·波特。\n現在，最後一課——把你會的全部使出來。讓我看看，我養大的巫師是什麼水準。"},
+          ], effect:{snape:14, courage:10, magic:8, stress:8}},
+          {label:"「這次換我保護您。」", then:[
+            {who:"snape", text:"哼，口氣不小。\n（決鬥練習持續到深夜。最後一道咒光落下時，他罕見地笑了——真正的笑。）\n……可以。你出師了。"},
+          ], effect:{courage:14, magic:10, snape:10, stress:8}},
+        ]},
+    ], next);
+  },
+};
+
 function pickRandomEvent(){
   const pool = RANDOM_EVENTS.filter(e =>
     e.cond() && !(e.once && S.onceEvents.includes(e.id)));
