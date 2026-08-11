@@ -35,13 +35,15 @@ body{
     var(--ground);
   color:var(--dlg-text);
   font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei","Heiti TC",sans-serif;
-  display:flex;align-items:center;justify-content:center;
+  display:flex;
   min-height:100vh;padding:14px;
 }
 button{font-family:inherit;cursor:pointer;}
 button:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
 
 #game{
+  /* margin:auto 置中：內容比視窗高時仍可完整捲動（align-items:center 會把頂端切掉） */
+  margin:auto;
   width:100%;max-width:1020px;
   border:3px solid var(--gold-2);
   outline:1px solid #000;
