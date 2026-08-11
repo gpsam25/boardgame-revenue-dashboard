@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>魔法少女育成計畫：哈莉·波特</title>
+<style>
+/* ============================================================
+   魔法少女育成計畫：哈莉·波特 — 美少女夢工廠式養成遊戲
+   單一視覺主題：城堡深綠 × 羊皮紙 × 古金（復古 90 年代養成遊戲 UI）
+   ============================================================ */
+:root{
+  --ground:#0e1613;        /* 城堡石牆深綠黑 */
+  --ground-2:#152019;
+  --parch:#f1e3c2;         /* 羊皮紙 */
+  --parch-2:#e6d3a8;
+  --ink:#3a2c1c;           /* 墨棕 */
+  --ink-soft:#6b5638;
+  --gold:#c9a227;          /* 古金 */
+  --gold-2:#8a6d1c;
+  --dlg:#101d17;           /* 對話框深綠 */
+  --dlg-text:#f4ead2;
+  --accent:#2f7d52;        /* 史萊哲林綠（石內卜） */
+  --bad:#9b2c23;
+  --good:#2f7d52;
+  --house:#7f0909;         /* 依分類學院動態改寫 */
+  --house-2:#d4a017;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #1d2c23 0%, transparent 60%),
+    radial-gradient(900px 500px at 85% 110%, #18251d 0%, transparent 55%),
+    var(--ground);
+  color:var(--dlg-text);
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei","Heiti TC",sans-serif;
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;padding:14px;
+}
+button{font-family:inherit;cursor:pointer;}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
+
+#game{
+  width:100%;max-width:1020px;
+  border:3px solid var(--gold-2);
+  outline:1px solid #000;
+  box-shadow:0 0 0 6px #0a100d,0 18px 60px rgba(0,0,0,.6);
+  background:linear-gradient(180deg,var(--ground-2),var(--ground));
+  border-radius:6px;overflow:hidden;position:relative;
+}
+
+/* ---------- 通用羊皮紙面板 ---------- */
+.panel{
+  background:
+    repeating-linear-gradient(0deg, rgba(120,90,40,.04) 0 2px, transparent 2px 4px),
+    linear-gradient(160deg,var(--parch) 0%,var(--parch-2) 100%);
+  color:var(--ink);
+  border:2px solid var(--gold-2);
+  box-shadow:inset 0 0 0 2px rgba(255,244,214,.55), inset 0 0 26px rgba(122,89,38,.25);
+  border-radius:5px;
+}
+.panel-title{
+  font-family:"Noto Serif TC","Songti TC",serif;
+  font-weight:700;letter-spacing:.35em;text-indent:.35em;
+  text-align:center;color:var(--gold-2);
+  border-bottom:1px solid rgba(138,109,28,.45);
+  padding:6px 0;margin-bottom:8px;font-size:14px;
+}
+
+/* ---------- 標題畫面 ---------- */
+#screen-title{padding:46px 24px 40px;text-align:center;position:relative;min-height:560px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+#screen-title .stars{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+#screen-title .stars span{position:absolute;color:var(--gold);opacity:.6;animation:tw 3s ease-in-out infinite;}
+@keyframes tw{0%,100%{opacity:.15;transform:scale(.8);}50%{opacity:.8;transform:scale(1.1);}}
+@media (prefers-reduced-motion: reduce){ *{animation:none !important;transition:none !important;} }
+.title-eyebrow{letter-spacing:.6em;text-indent:.6em;color:var(--gold);font-size:13px;}
+.title-main{
+  font-family:"Noto Serif TC","Songti TC",serif;font-weight:900;
+  font-size:clamp(30px,5.4vw,52px);line-height:1.25;text-wrap:balance;
+  color:var(--parch);text-shadow:0 2px 0 #000,0 0 26px rgba(201,162,39,.35);
+}
+.title-main em{font-style:normal;color:var(--gold);}
+.title-sub{color:#bcae8d;font-size:14px;letter-spacing:.2em;text-indent:.2em;}
+.title-frame{width:min(420px,80%);height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:6px auto;}
+.btn{
+  background:linear-gradient(180deg,#20362a,#152218);
+  color:var(--parch);border:2px solid var(--gold-2);
+  padding:11px 34px;font-size:16px;letter-spacing:.3em;text-indent:.3em;
+  border-radius:4px;box-shadow:0 3px 0 #000;
+  transition:transform .08s ease, box-shadow .08s ease, background .15s ease;
+}
+.btn:hover{background:linear-gradient(180deg,#2a4736,#1b2c20);}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #000;}
+.btn.gold{background:linear-gradient(180deg,#c9a227,#8a6d1c);color:#20180a;font-weight:700;}
+.btn.gold:hover{background:linear-gradient(180deg,#dcb838,#9c7d22);}
+.btn.small{padding:7px 16px;font-size:13px;letter-spacing:.15em;text-indent:.15em;}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+
+/* ---------- 主畫面 ---------- */
+#screen-main{display:none;padding:12px;gap:12px;}
+#screen-main.active{display:grid;grid-template-columns:340px 1fr;grid-template-rows:auto 1fr;}
+@media (max-width:760px){ #screen-main.active{grid-template-columns:1fr;} }
+
+.topbar{
+  grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+  background:linear-gradient(180deg,#1b2a21,#121d16);
+  border:2px solid var(--gold-2);border-radius:5px;padding:8px 12px;
+}
+.topbar .date{font-family:"Noto Serif TC",serif;font-weight:700;font-size:17px;color:var(--gold);letter-spacing:.1em;}
+.topbar .chip{
+  background:#0d1712;border:1px solid var(--gold-2);border-radius:3px;
+  padding:3px 10px;font-size:13px;color:var(--parch);
+  font-variant-numeric:tabular-nums;
+}
+.topbar .chip b{color:var(--gold);font-weight:600;}
+.topbar .spacer{flex:1;}
+
+.portrait-card{padding:10px;display:flex;flex-direction:column;gap:8px;}
+.portrait-frame{
+  border:3px double var(--gold-2);border-radius:4px;
+  background:
+    radial-gradient(320px 260px at 50% 30%, #24382c 0%, #101b14 75%),
+    #101b14;
+  position:relative;overflow:hidden;aspect-ratio:5/6;
+}
+.portrait-frame svg{width:100%;height:100%;display:block;}
+.portrait-frame .corner{position:absolute;width:16px;height:16px;border:2px solid var(--gold);}
+.corner.tl{top:4px;left:4px;border-right:0;border-bottom:0;}
+.corner.tr{top:4px;right:4px;border-left:0;border-bottom:0;}
+.corner.bl{bottom:4px;left:4px;border-right:0;border-top:0;}
+.corner.br{bottom:4px;right:4px;border-left:0;border-top:0;}
+.portrait-name{
+  text-align:center;font-family:"Noto Serif TC",serif;font-weight:700;
+  color:var(--ink);letter-spacing:.2em;text-indent:.2em;
+}
+.portrait-house{
+  text-align:center;font-size:12px;color:#fff;
+  background:linear-gradient(90deg,var(--house),var(--house) 60%,var(--house-2));
+  border-radius:3px;padding:3px 0;letter-spacing:.3em;text-indent:.3em;
+  text-shadow:0 1px 2px rgba(0,0,0,.5);
+}
+
+.stats-card{padding:10px 12px;display:flex;flex-direction:column;}
+.stat-row{display:grid;grid-template-columns:64px 1fr 44px;gap:8px;align-items:center;padding:4px 0;}
+.stat-name{font-size:13px;color:var(--ink);letter-spacing:.15em;}
+.stat-bar{height:12px;background:#d9c294;border:1px solid var(--gold-2);border-radius:2px;overflow:hidden;position:relative;}
+.stat-fill{height:100%;background:linear-gradient(90deg,#5f8f4e,#8fae3f);transition:width .5s ease;}
+.stat-fill.f-magic{background:linear-gradient(90deg,#4b5fa8,#7d8fd6);}
+.stat-fill.f-knowledge{background:linear-gradient(90deg,#8a6d1c,#c9a227);}
+.stat-fill.f-fitness{background:linear-gradient(90deg,#a8642a,#d9974a);}
+.stat-fill.f-charm{background:linear-gradient(90deg,#a84b74,#d67da4);}
+.stat-fill.f-courage{background:linear-gradient(90deg,#9b2c23,#d0583a);}
+.stat-fill.f-dark{background:linear-gradient(90deg,#3a2b52,#6b4d9e);}
+.stat-fill.f-stress{background:linear-gradient(90deg,#6c6f2a,#b0b23c);}
+.stat-fill.f-snape{background:linear-gradient(90deg,#1f5d3e,#2f7d52);}
+.stat-val{font-size:13px;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums;}
+.main-actions{display:flex;gap:8px;margin-top:auto;padding-top:10px;flex-wrap:wrap;}
+.main-actions .btn{flex:1;min-width:120px;}
+
+/* ---------- 行程安排 ---------- */
+#screen-schedule{display:none;padding:12px;flex-direction:column;gap:10px;}
+#screen-schedule.active{display:flex;}
+.slots{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;}
+.slot{
+  flex:1;min-width:140px;text-align:center;padding:9px 6px;border:2px dashed var(--gold-2);
+  border-radius:4px;color:var(--ink-soft);font-size:14px;background:rgba(255,248,226,.35);
+}
+.slot.filled{border-style:solid;color:var(--ink);font-weight:700;background:#fff6de;}
+.slot small{display:block;font-weight:400;color:var(--ink-soft);font-size:11px;letter-spacing:.2em;}
+.acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;padding:10px 12px;}
+.act{
+  text-align:left;background:#fff6de;border:2px solid var(--gold-2);border-radius:4px;
+  padding:8px 10px;color:var(--ink);transition:transform .07s ease,background .15s ease;
+}
+.act:hover{background:#ffeec4;transform:translateY(-1px);}
+.act:disabled{opacity:.4;transform:none;}
+.act .a-name{font-weight:700;font-size:14px;display:flex;justify-content:space-between;align-items:baseline;}
+.act .a-cost{font-size:12px;color:var(--ink-soft);font-variant-numeric:tabular-nums;}
+.act .a-cost.earn{color:var(--good);font-weight:700;}
+.act .a-cost.pay{color:var(--bad);}
+.act .a-desc{font-size:12px;color:var(--ink-soft);margin-top:2px;line-height:1.5;}
+.sched-foot{display:flex;gap:8px;justify-content:flex-end;padding:0 2px 2px;}
+
+/* ---------- 月結算 ---------- */
+#screen-run{display:none;padding:12px;flex-direction:column;gap:10px;}
+#screen-run.active{display:flex;}
+.run-list{padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-height:260px;}
+.run-item{opacity:0;transform:translateY(6px);transition:opacity .4s ease,transform .4s ease;}
+.run-item.show{opacity:1;transform:none;}
+.run-item .r-head{font-family:"Noto Serif TC",serif;font-weight:700;color:var(--ink);letter-spacing:.1em;}
+.run-item .r-head small{color:var(--ink-soft);font-weight:400;letter-spacing:.2em;margin-right:6px;}
+.run-item .r-gains{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.gain{
+  font-size:12px;padding:2px 8px;border-radius:3px;border:1px solid var(--gold-2);
+  background:#fff6de;color:var(--ink);font-variant-numeric:tabular-nums;
+}
+.gain.up{color:var(--good);font-weight:700;}
+.gain.down{color:var(--bad);font-weight:700;}
+.run-foot{display:flex;justify-content:flex-end;}
+
+/* ---------- 對話框 ---------- */
+#dialog{
+  display:none;position:absolute;left:0;right:0;bottom:0;z-index:40;
+  padding:10px;
+}
+#dialog.active{display:block;}
+.dlg-box{
+  background:linear-gradient(180deg,rgba(16,29,23,.97),rgba(10,19,14,.97));
+  border:2px solid var(--gold);border-radius:6px;
+  box-shadow:0 -8px 30px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.6);
+  padding:12px 14px 12px;display:grid;grid-template-columns:96px 1fr;gap:12px;min-height:132px;
+}
+.dlg-face{
+  width:96px;height:96px;border:2px solid var(--gold-2);border-radius:4px;
+  background:radial-gradient(70px 60px at 50% 35%, #22392c, #0d1712);overflow:hidden;
+  align-self:start;
+}
+.dlg-face svg{width:100%;height:100%;display:block;}
+.dlg-face.none{visibility:hidden;}
+.dlg-body{display:flex;flex-direction:column;min-width:0;}
+.dlg-name{
+  color:var(--gold);font-weight:700;letter-spacing:.25em;font-size:13px;margin-bottom:4px;
+  font-family:"Noto Serif TC",serif;
+}
+.dlg-text{color:var(--dlg-text);line-height:1.8;font-size:15px;flex:1;white-space:pre-wrap;}
+.dlg-next{align-self:flex-end;color:var(--gold);font-size:12px;animation:bob 1s ease-in-out infinite;user-select:none;}
+@keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(3px);}}
+.dlg-choices{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.dlg-choices .btn{letter-spacing:.1em;text-indent:.1em;padding:8px 18px;font-size:14px;}
+
+/* ---------- 結局 ---------- */
+#screen-ending{display:none;padding:20px;flex-direction:column;gap:14px;align-items:center;}
+#screen-ending.active{display:flex;}
+.end-card{width:min(680px,100%);padding:20px 24px;text-align:center;}
+.end-title{
+  font-family:"Noto Serif TC",serif;font-weight:900;font-size:clamp(24px,4vw,34px);
+  color:var(--gold-2);letter-spacing:.2em;text-indent:.2em;margin:6px 0 10px;text-wrap:balance;
+}
+.end-eyebrow{font-size:12px;letter-spacing:.5em;text-indent:.5em;color:var(--ink-soft);}
+.end-desc{color:var(--ink);line-height:2;text-align:left;margin:8px 0;}
+.end-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px;margin-top:12px;}
+.end-stat{background:#fff6de;border:1px solid var(--gold-2);border-radius:3px;padding:6px 4px;font-size:13px;color:var(--ink);}
+.end-stat b{display:block;font-size:17px;color:var(--gold-2);font-variant-numeric:tabular-nums;}
+.end-portrait{width:min(300px,70%);}
+.end-portrait .portrait-frame{aspect-ratio:5/6;}
+
+/* ---------- 浮動訊息 ---------- */
+#toast{
+  position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:60;
+  background:rgba(16,29,23,.95);border:1px solid var(--gold);color:var(--parch);
+  padding:8px 18px;border-radius:4px;font-size:14px;display:none;letter-spacing:.1em;
+}
+</style>
+</head>
+<body>
+<div id="game" aria-live="polite">
+
+  <!-- ======= 標題畫面 ======= -->
+  <section id="screen-title">
+    <div class="stars" id="stars" aria-hidden="true"></div>
+    <div class="title-eyebrow">◆ 美少女夢工廠式 養成遊戲 ◆</div>
+    <h1 class="title-main">魔法少女育成計畫<br><em>哈莉·波特</em></h1>
+    <div class="title-frame"></div>
+    <p class="title-sub">魔藥學教授 賽佛勒斯·石內卜，<br>將撫養「活下來的女孩」直到十八歲成年——</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:10px;">
+      <button class="btn gold" id="btn-new">開始育成</button>
+      <button class="btn" id="btn-continue" style="display:none;">繼續遊戲</button>
+    </div>
+    <p class="title-sub" style="font-size:12px;opacity:.7;margin-top:8px;">非官方粉絲創作 · 僅供娛樂</p>
+  </section>
+
+  <!-- ======= 主畫面 ======= -->
+  <section id="screen-main">
+    <div class="topbar">
+      <span class="date" id="ui-date">1991年9月</span>
+      <span class="chip">第 <b id="ui-schoolyear">1</b> 學年</span>
+      <span class="chip">年齡 <b id="ui-age">11</b> 歲</span>
+      <span class="spacer"></span>
+      <span class="chip">💰 <b id="ui-money">80</b> 加隆</span>
+    </div>
+
+    <div class="panel portrait-card">
+      <div class="portrait-frame" id="ui-portrait">
+        <span class="corner tl"></span><span class="corner tr"></span>
+        <span class="corner bl"></span><span class="corner br"></span>
+      </div>
+      <div class="portrait-name">哈莉·波特</div>
+      <div class="portrait-house" id="ui-house">尚未分類</div>
+    </div>
+
+    <div class="panel stats-card">
+      <div class="panel-title">能 力</div>
+      <div id="ui-stats"></div>
+      <div class="main-actions">
+        <button class="btn gold" id="btn-schedule">安排行程</button>
+        <button class="btn small" id="btn-talk">找教授談話</button>
+        <button class="btn small" id="btn-save">記錄日誌</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======= 行程安排 ======= -->
+  <section id="screen-schedule">
+    <div class="panel">
+      <div class="panel-title" style="margin-bottom:0;">本 月 行 程（三旬）</div>
+      <div class="slots">
+        <div class="slot" id="slot-0"><small>上旬</small>—</div>
+        <div class="slot" id="slot-1"><small>中旬</small>—</div>
+        <div class="slot" id="slot-2"><small>下旬</small>—</div>
+      </div>
+    </div>
+    <div class="panel" style="flex:1;overflow:auto;">
+      <div class="panel-title" style="margin-bottom:0;">選 擇 活 動</div>
+      <div class="acts" id="ui-acts"></div>
+    </div>
+    <div class="sched-foot">
+      <button class="btn small" id="btn-sched-clear">重新安排</button>
+      <button class="btn small" id="btn-sched-back">返回</button>
+      <button class="btn gold small" id="btn-sched-go" disabled>開始這個月</button>
+    </div>
+  </section>
+
+  <!-- ======= 月結算 ======= -->
+  <section id="screen-run">
+    <div class="panel" style="flex:1;">
+      <div class="panel-title" id="run-title">月結算</div>
+      <div class="run-list" id="run-list"></div>
+    </div>
+    <div class="run-foot">
+      <button class="btn gold small" id="btn-run-next" style="visibility:hidden;">繼續 ▼</button>
+    </div>
+  </section>
+
+  <!-- ======= 結局 ======= -->
+  <section id="screen-ending">
+    <div class="end-portrait"><div class="portrait-frame" id="end-portrait"></div></div>
+    <div class="panel end-card">
+      <div class="end-eyebrow">─ ENDING ─</div>
+      <div class="end-title" id="end-title"></div>
+      <div class="end-desc" id="end-desc"></div>
+      <div class="end-stats" id="end-stats"></div>
+    </div>
+    <button class="btn gold" id="btn-restart">再次育成</button>
+  </section>
+
+  <!-- ======= 對話框 ======= -->
+  <div id="dialog">
+    <div class="dlg-box">
+      <div class="dlg-face" id="dlg-face"></div>
+      <div class="dlg-body">
+        <div class="dlg-name" id="dlg-name"></div>
+        <div class="dlg-text" id="dlg-text"></div>
+        <div class="dlg-choices" id="dlg-choices"></div>
+        <div class="dlg-next" id="dlg-next">▼ 點擊繼續</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   基本工具
+============================================================ */
+const $ = id => document.getElementById(id);
+const rnd = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+const SAVE_KEY = "hally-raising-v1";
+
+/* ============================================================
+   遊戲狀態
+============================================================ */
+const STAT_DEFS = [
+  {key:"magic",     name:"魔　力", cls:"f-magic"},
+  {key:"knowledge", name:"知　識", cls:"f-knowledge"},
+  {key:"fitness",   name:"體　能", cls:"f-fitness"},
+  {key:"charm",     name:"魅　力", cls:"f-charm"},
+  {key:"courage",   name:"勇　氣", cls:"f-courage"},
+  {key:"dark",      name:"黑暗傾向", cls:"f-dark"},
+  {key:"stress",    name:"壓　力", cls:"f-stress"},
+  {key:"snape",     name:"教授好感", cls:"f-snape"},
+];
+const STAT_MAX = {magic:999,knowledge:999,fitness:999,charm:999,courage:999,dark:999,stress:120,snape:500};
+const STAT_NAME = Object.fromEntries(STAT_DEFS.map(d=>[d.key,d.name.replace(/　/g,"")]));
+STAT_NAME.money = "加隆";
+
+const HOUSES = {
+  gryffindor:{name:"葛來分多", c1:"#7f0909", c2:"#d4a017", bonus:{courage:25}},
+  slytherin: {name:"史萊哲林", c1:"#0f3d29", c2:"#b9c4c9", bonus:{magic:15,dark:5,snape:15}},
+  ravenclaw: {name:"雷文克勞", c1:"#1d3a6e", c2:"#8a5a2b", bonus:{knowledge:25}},
+  hufflepuff:{name:"赫夫帕夫", c1:"#a8860b", c2:"#2f2b28", bonus:{fitness:12,charm:12}},
+};
+
+let S = null;
+function newState(){
+  return {
+    house:null,
+    monthIndex:0,           // 0 = 1991年9月，83 = 1998年8月
+    stats:{magic:30,knowledge:30,fitness:30,charm:25,courage:35,dark:5,stress:10,snape:20},
+    money:80,
+    flags:{sorted:false,quidditch:false,sickPending:false,metHermione:false,wandDream:false},
+    onceEvents:[],
+    schedule:[],
+  };
+}
+function dateOf(i){
+  const m0 = 8 + i;               // 0-based month since 1991-01
+  const year = 1991 + Math.floor(m0/12);
+  const month = (m0%12)+1;
+  return {year,month};
+}
+function ageOf(){
+  const {year,month} = dateOf(S.monthIndex);
+  return (year-1980) - (month<8?1:0);   // 生日 7/31
+}
+function schoolYearOf(){
+  return clamp(Math.floor(S.monthIndex/12)+1,1,7);
+}
+function stageOf(){
+  const a = ageOf();
+  return a<13?1:(a<16?2:3);
+}
+
+/* ============================================================
+   立繪（SVG · 動漫風）
+   哈莉：黑色亂髮、祖母綠大眼、圓框眼鏡、閃電疤痕、學院制服
+   三階段成長；石內卜：黑髮簾、鷹勾鼻、黑袍
+============================================================ */
+function hallySVG(stage, houseKey){
+  const h = HOUSES[houseKey] || {c1:"#4a4a55", c2:"#8d8d99"};
+  const skin="#ffe3cf", skinSh="#f3c9ae", hair="#20202a", hairHi="#3d3d52",
+        eye="#2e9e63", eyeDk="#176441";
+  // 依年齡調整：臉型、眼睛大小、髮長
+  const eyeR   = stage===1?11.5 : stage===2?10.5 : 9.5;
+  const faceW  = stage===1?34 : stage===2?32 : 30.5;
+  const backHair =
+    stage===1
+    ? `M60,96 Q52,150 62,176 L74,168 Q66,132 72,104 Z M140,96 Q148,150 138,176 L126,168 Q134,132 128,104 Z`
+    : stage===2
+    ? `M58,94 Q44,160 58,206 L74,196 Q62,140 70,102 Z M142,94 Q156,160 142,206 L126,196 Q138,140 130,102 Z`
+    : `M56,92 Q38,170 54,228 Q60,236 68,230 Q58,160 68,100 Z M144,92 Q162,170 146,228 Q140,236 132,230 Q142,160 132,100 Z`;
+  const clip = stage>=2 ? `<circle cx="${100+faceW-6}" cy="74" r="4" fill="${h.c2}" stroke="#7a611a" stroke-width="1"/>` : "";
+  const smile = stage===3
+    ? `<path d="M92,124 Q100,131 108,124" fill="none" stroke="#b05a4a" stroke-width="2.4" stroke-linecap="round"/>`
+    : `<path d="M94,124 Q100,129 106,124" fill="none" stroke="#c46a55" stroke-width="2" stroke-linecap="round"/>`;
+  return `
+<svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="哈莉·波特立繪">
+  <defs>
+    <linearGradient id="robe${stage}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#23232e"/><stop offset="1" stop-color="#121218"/>
+    </linearGradient>
+  </defs>
+  <!-- 後腦髮底（避免瀏海縫隙露出背景） -->
+  <ellipse cx="100" cy="80" rx="${faceW+10}" ry="48" fill="${hair}"/>
+  <!-- 後髮 -->
+  <path d="${backHair}" fill="${hair}"/>
+  <path d="M62,70 Q56,110 60,150 L66,148 Q62,110 70,78 Z" fill="${hairHi}" opacity=".5"/>
+  <!-- 頸與制服 -->
+  <rect x="92" y="128" width="16" height="18" fill="${skinSh}"/>
+  <path d="M40,240 Q44,182 78,164 L100,176 L122,164 Q156,182 160,240 Z" fill="url(#robe${stage})" stroke="#000" stroke-width="1.5"/>
+  <path d="M78,164 L100,176 L122,164 L118,158 L100,168 L82,158 Z" fill="#f5efe2"/>
+  <path d="M96,176 L104,176 L106,214 L100,222 L94,214 Z" fill="${h.c1}"/>
+  <path d="M96,184 L104,184 L104,190 L96,190 Z M95,198 L105,198 L105,204 L95,204 Z" fill="${h.c2}"/>
+  <path d="M40,240 Q44,182 78,164 L84,172 Q56,192 52,240 Z" fill="${h.c1}" opacity=".85"/>
+  <path d="M160,240 Q156,182 122,164 L116,172 Q144,192 148,240 Z" fill="${h.c1}" opacity=".85"/>
+  <!-- 臉 -->
+  <path d="M${100-faceW},86 Q${100-faceW},46 100,46 Q${100+faceW},46 ${100+faceW},86 Q${100+faceW},116 100,132 Q${100-faceW},116 ${100-faceW},86 Z" fill="${skin}"/>
+  <path d="M${100+faceW-6},92 Q${100+faceW-2},108 100,128 Q${100+faceW-14},116 ${100+faceW-6},92 Z" fill="${skinSh}" opacity=".4"/>
+  <!-- 耳 -->
+  <ellipse cx="${100-faceW+1}" cy="94" rx="5" ry="8" fill="${skin}"/>
+  <ellipse cx="${100+faceW-1}" cy="94" rx="5" ry="8" fill="${skin}"/>
+  <!-- 眼睛 -->
+  <g>
+    <ellipse cx="82" cy="98" rx="${eyeR}" ry="${eyeR*1.15}" fill="#fff"/>
+    <ellipse cx="118" cy="98" rx="${eyeR}" ry="${eyeR*1.15}" fill="#fff"/>
+    <ellipse cx="82" cy="99" rx="${eyeR*.62}" ry="${eyeR*.85}" fill="${eye}"/>
+    <ellipse cx="118" cy="99" rx="${eyeR*.62}" ry="${eyeR*.85}" fill="${eye}"/>
+    <ellipse cx="82" cy="101" rx="${eyeR*.3}" ry="${eyeR*.42}" fill="${eyeDk}"/>
+    <ellipse cx="118" cy="101" rx="${eyeR*.3}" ry="${eyeR*.42}" fill="${eyeDk}"/>
+    <circle cx="78.5" cy="94" r="${eyeR*.22}" fill="#fff"/>
+    <circle cx="114.5" cy="94" r="${eyeR*.22}" fill="#fff"/>
+    <path d="M${82-eyeR},${92} Q82,${86} ${82+eyeR},${92}" fill="none" stroke="${hair}" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M${118-eyeR},${92} Q118,${86} ${118+eyeR},${92}" fill="none" stroke="${hair}" stroke-width="2.6" stroke-linecap="round"/>
+  </g>
+  <!-- 圓框眼鏡 -->
+  <g stroke="#caa64a" stroke-width="1.8" fill="none" opacity=".9">
+    <circle cx="82" cy="99" r="${eyeR+3.5}"/>
+    <circle cx="118" cy="99" r="${eyeR+3.5}"/>
+    <path d="M${82+eyeR+3.5},99 L${118-eyeR-3.5},99"/>
+    <path d="M${82-eyeR-3.5},97 L${100-faceW+2},92 M${118+eyeR+3.5},97 L${100+faceW-2},92"/>
+  </g>
+  <!-- 鼻·口·腮紅 -->
+  <path d="M100,110 Q102,114 99,116" fill="none" stroke="${skinSh}" stroke-width="2" stroke-linecap="round"/>
+  ${smile}
+  <ellipse cx="74" cy="112" rx="6" ry="3" fill="#f7a8a0" opacity=".5"/>
+  <ellipse cx="126" cy="112" rx="6" ry="3" fill="#f7a8a0" opacity=".5"/>
+  <!-- 瀏海（亂翹） -->
+  <path d="M${100-faceW-4},88 Q${100-faceW-2},50 84,44 Q100,36 116,44 Q${100+faceW+2},50 ${100+faceW+4},88
+           L${100+faceW-4},84 L128,64 L122,82 L112,60 L104,80 L96,58 L88,80 L78,62 L72,84 L${100-faceW+4},84 Z"
+        fill="${hair}"/>
+  <path d="M88,48 Q100,42 112,48 Q104,44 96,44 Z" fill="${hairHi}" opacity=".6"/>
+  ${clip}
+  <!-- 閃電疤痕 -->
+  <path d="M91,66 L87,73 L91,73 L86,81" fill="none" stroke="#c96a4e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>`;
+}
+
+function snapeSVG(){
+  const skin="#efe0d2", hair="#141419";
+  return `
+<svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="石內卜立繪">
+  <path d="M54,60 Q44,140 52,210 L76,200 Q62,130 72,72 Z M146,60 Q156,140 148,210 L124,200 Q138,130 128,72 Z" fill="${hair}"/>
+  <path d="M34,240 Q42,178 76,162 L100,174 L124,162 Q158,178 166,240 Z" fill="#101014" stroke="#000" stroke-width="1.5"/>
+  <path d="M92,168 L108,168 L106,240 L94,240 Z" fill="#0a0a0d"/>
+  <circle cx="100" cy="184" r="2.2" fill="#3a3a44"/><circle cx="100" cy="196" r="2.2" fill="#3a3a44"/>
+  <circle cx="100" cy="208" r="2.2" fill="#3a3a44"/><circle cx="100" cy="220" r="2.2" fill="#3a3a44"/>
+  <path d="M84,162 Q100,172 116,162 L112,152 L100,160 L88,152 Z" fill="#1c1c24"/>
+  <rect x="93" y="128" width="14" height="24" fill="#e2cdbb"/>
+  <path d="M66,88 Q66,44 100,44 Q134,44 134,88 Q134,120 100,136 Q66,120 66,88 Z" fill="${skin}"/>
+  <path d="M126,94 Q130,112 100,132 Q118,118 122,96 Z" fill="#d9c2ae" opacity=".5"/>
+  <g>
+    <path d="M72,90 Q80,86 90,90" stroke="#141419" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M110,90 Q120,86 128,90" stroke="#141419" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <ellipse cx="81" cy="97" rx="6.5" ry="4.5" fill="#fff"/>
+    <ellipse cx="119" cy="97" rx="6.5" ry="4.5" fill="#fff"/>
+    <circle cx="81" cy="97.5" r="3" fill="#26262e"/>
+    <circle cx="119" cy="97.5" r="3" fill="#26262e"/>
+  </g>
+  <path d="M100,96 Q108,108 103,116 Q100,119 96,116" fill="${skin}" stroke="#c9ab92" stroke-width="1.6" stroke-linejoin="round"/>
+  <path d="M92,125 L108,125" stroke="#8a6a58" stroke-width="2" stroke-linecap="round"/>
+  <path d="M60,84 Q60,38 100,38 Q140,38 140,84 L134,86 Q136,50 100,48 Q64,50 66,86 Z" fill="${hair}"/>
+  <path d="M66,86 Q74,66 90,58 L84,84 Z M134,86 Q126,66 110,58 L116,84 Z" fill="${hair}"/>
+</svg>`;
+}
+
+function hatSVG(){
+  return `
+<svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="分類帽">
+  <path d="M30,196 Q100,176 170,196 Q172,212 100,214 Q28,212 30,196 Z" fill="#4a3421" stroke="#2c1d10" stroke-width="3"/>
+  <path d="M56,196 Q60,120 84,72 Q96,44 108,64 Q104,90 128,110 Q150,130 144,196 Q100,184 56,196 Z" fill="#5d4228" stroke="#2c1d10" stroke-width="3"/>
+  <path d="M70,150 Q90,144 84,132 M118,152 Q104,146 112,134" stroke="#2c1d10" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M78,168 Q86,160 94,168 M106,168 Q114,160 122,168" stroke="#2c1d10" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+  <path d="M84,182 Q100,196 118,182 Q102,188 84,182 Z" fill="#2c1d10"/>
+</svg>`;
+}
+
+function dumbledoreSVG(){
+  const skin="#f5e0cd";
+  return `
+<svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="鄧不利多立繪">
+  <path d="M40,240 Q46,180 80,166 L100,176 L120,166 Q154,180 160,240 Z" fill="#3b2b5e" stroke="#241a3c" stroke-width="2"/>
+  <path d="M64,86 Q64,48 100,48 Q136,48 136,86 Q136,112 100,126 Q64,112 64,86 Z" fill="${skin}"/>
+  <path d="M64,100 Q56,180 100,208 Q144,180 136,100 Q128,150 100,158 Q72,150 64,100 Z" fill="#e9e4da"/>
+  <path d="M60,84 Q58,40 100,36 Q142,40 140,84 L132,80 Q134,50 100,46 Q66,50 68,80 Z" fill="#dcd6ca"/>
+  <path d="M100,36 L128,8 L136,40 Q120,32 100,36 Z" fill="#3b2b5e" stroke="#241a3c" stroke-width="2"/>
+  <g stroke="#b09246" stroke-width="1.8" fill="none">
+    <path d="M72,94 Q81,102 90,94 M110,94 Q119,102 128,94"/>
+    <path d="M90,94 L110,94"/>
+  </g>
+  <circle cx="81" cy="93" r="2.6" fill="#2a3d66"/><circle cx="119" cy="93" r="2.6" fill="#2a3d66"/>
+  <path d="M100,96 Q104,106 100,112" stroke="#d9bfa4" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M88,120 Q100,127 112,120" stroke="#c9a98c" stroke-width="2" fill="none" stroke-linecap="round"/>
+</svg>`;
+}
+
+const FACES = {
+  hally: () => hallySVG(stageOf(), S.house || "gryffindor"),
+  snape: snapeSVG,
+  hat: hatSVG,
+  dumbledore: dumbledoreSVG,
+  none: () => "",
+};
+const SPEAKER = {
+  hally:"哈莉", snape:"石內卜", hat:"分類帽", dumbledore:"鄧不利多", none:"",
+  narr:"", voldemort:"？？？",
+};
+
+/* ============================================================
+   對話引擎（打字機 + 選項）
+============================================================ */
+const dlg = {queue:[], typing:false, timer:null, onDone:null, cur:null};
+
+function say(items, onDone){
+  dlg.queue = items.slice();
+  dlg.onDone = onDone || null;
+  $("dialog").classList.add("active");
+  dlgNext();
+}
+function dlgNext(){
+  if(dlg.typing){ // 快轉
+    clearInterval(dlg.timer); dlg.typing = false;
+    $("dlg-text").textContent = dlg.cur.text;
+    if(dlg.cur.choices) showChoices(dlg.cur.choices);
+    else $("dlg-next").style.visibility = "visible";
+    return;
+  }
+  if(dlg.cur && dlg.cur.choices) return; // 等待選項
+  const item = dlg.queue.shift();
+  if(!item){
+    $("dialog").classList.remove("active");
+    dlg.cur = null;
+    const cb = dlg.onDone; dlg.onDone = null;
+    if(cb) cb();
+    return;
+  }
+  dlg.cur = item;
+  const who = item.who || "narr";
+  const faceKey = (item.face !== undefined) ? item.face : (FACES[who] ? who : "none");
+  const face = $("dlg-face");
+  if(faceKey && faceKey!=="none" && FACES[faceKey]){
+    face.classList.remove("none"); face.innerHTML = FACES[faceKey]();
+  } else { face.classList.add("none"); face.innerHTML = ""; }
+  $("dlg-name").textContent = item.name || SPEAKER[who] || "";
+  $("dlg-choices").innerHTML = "";
+  $("dlg-next").style.visibility = "hidden";
+  const textEl = $("dlg-text");
+  textEl.textContent = "";
+  let i = 0; dlg.typing = true;
+  dlg.timer = setInterval(()=>{
+    textEl.textContent = item.text.slice(0, ++i);
+    if(i >= item.text.length){
+      clearInterval(dlg.timer); dlg.typing = false;
+      if(item.choices) showChoices(item.choices);
+      else $("dlg-next").style.visibility = "visible";
+    }
+  }, 26);
+}
+function showChoices(choices){
+  const box = $("dlg-choices");
+  box.innerHTML = "";
+  choices.forEach(c=>{
+    const b = document.createElement("button");
+    b.className = "btn small"; b.textContent = c.label;
+    b.onclick = (e)=>{
+      e.stopPropagation();
+      dlg.cur = null; box.innerHTML = "";
+      if(c.house){ S.house = c.house; refreshUI(); }
+      if(c.then) dlg.queue = c.then.concat(dlg.queue);
+      if(c.effect) applyGains(c.effect, true);
+      dlgNext();
+    };
+    box.appendChild(b);
+  });
+}
+$("dialog").addEventListener("click", dlgNext);
+document.addEventListener("keydown", e=>{
+  if((e.key===" "||e.key==="Enter") && $("dialog").classList.contains("active")){
+    e.preventDefault(); dlgNext();
+  }
+});
+
+/* ============================================================
+   數值處理
+============================================================ */
+function applyGains(g, toast){
+  const parts = [];
+  for(const k in g){
+    const v = g[k];
+    if(k === "money"){ S.money = Math.max(0, S.money + v); }
+    else if(k in S.stats){ S.stats[k] = clamp(S.stats[k] + v, 0, STAT_MAX[k]); }
+    else continue;
+    parts.push(`${STAT_NAME[k]}${v>0?"+":""}${v}`);
+  }
+  refreshUI();
+  if(toast && parts.length) showToast(parts.join("　"));
+}
+let toastTimer = null;
+function showToast(msg){
+  const t = $("toast");
+  t.textContent = msg; t.style.display = "block";
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ t.style.display = "none"; }, 2200);
+}
+
+/* ============================================================
+   活動定義（每旬執行一次；正值 = 成長，壓力另計）
+============================================================ */
+const ACTIVITIES = [
+  {id:"potion",  name:"魔藥學",       cost:30, gains:{knowledge:9, magic:3, stress:6, snape:3},
+    desc:"石內卜教授親自指導。嚴格，但學得紮實。"},
+  {id:"charms",  name:"符咒學",       cost:30, gains:{magic:9, knowledge:3, stress:5},
+    desc:"孚立維教授的課。羽毛飄浮，是魔法的基本功。"},
+  {id:"dada",    name:"黑魔法防禦術", cost:35, gains:{magic:6, courage:7, stress:7},
+    desc:"面對黑魔法的實戰訓練，稍微累人。"},
+  {id:"transf",  name:"變形學",       cost:35, gains:{knowledge:6, magic:6, stress:7},
+    desc:"麥教授的課，一絲不苟。火柴變成針！"},
+  {id:"flying",  name:"飛行訓練",     cost:25, gains:{fitness:9, courage:4, stress:6},
+    desc:"騎上掃帚翱翔天際，鍛鍊體能與膽量。"},
+  {id:"dance",   name:"禮儀與舞蹈",   cost:40, gains:{charm:9, stress:5},
+    desc:"淑女養成課程。石內卜嗤之以鼻，但沒有阻止。"},
+  {id:"library", name:"圖書館自習",   cost:0,  gains:{knowledge:6, magic:2, stress:4},
+    desc:"免費。安靜的午後與成堆的書。"},
+  {id:"restrict",name:"禁書區夜讀",   cost:0,  gains:{magic:11, knowledge:4, dark:5, stress:8},
+    desc:"披著隱形斗篷潛入禁書區……禁忌的知識。", risky:true},
+  {id:"owlpost", name:"貓頭鷹郵局打工",cost:-25, gains:{fitness:5, stress:4},
+    desc:"分揀信件、安撫貓頭鷹。薪水實在。"},
+  {id:"candy",   name:"蜂蜜公爵打工", cost:-20, gains:{charm:5, stress:3},
+    desc:"糖果店的招牌店員，笑容是必修課。"},
+  {id:"broom",   name:"三根掃帚打工", cost:-30, gains:{charm:4, fitness:3, stress:5},
+    desc:"端奶油啤酒、招呼客人，見識各色巫師。"},
+  {id:"herb",    name:"溫室助手",     cost:-22, gains:{knowledge:4, fitness:4, stress:4},
+    desc:"幫芽菜教授照顧魔蘋果。記得戴耳罩。"},
+  {id:"forest",  name:"禁忌森林採集", cost:-50, gains:{courage:7, dark:2, stress:9},
+    desc:"高薪但危險。為魔藥課採集稀有材料。", risky:true},
+  {id:"rest",    name:"休息",         cost:0,  gains:{stress:-26, fitness:1},
+    desc:"睡到自然醒，找妙麗喝下午茶。"},
+  {id:"hogsmeade",name:"霍格莫德出遊", cost:20, gains:{stress:-16, charm:3},
+    desc:"花點小錢，逛街散心。"},
+];
+const ACT_BY_ID = Object.fromEntries(ACTIVITIES.map(a=>[a.id,a]));
+
+/* ============================================================
+   畫面切換 / UI 更新
+============================================================ */
+function showScreen(id){
+  ["screen-title","screen-main","screen-schedule","screen-run","screen-ending"]
+    .forEach(s => $(s).classList.toggle("active", s===id));
+  $("screen-title").style.display = (id==="screen-title") ? "flex" : "none";
+}
+function refreshUI(){
+  if(!S) return;
+  const {year,month} = dateOf(S.monthIndex);
+  $("ui-date").textContent = `${year}年${month}月`;
+  $("ui-age").textContent = ageOf();
+  $("ui-schoolyear").textContent = schoolYearOf();
+  $("ui-money").textContent = S.money;
+  const h = HOUSES[S.house];
+  $("ui-house").textContent = h ? h.name : "尚未分類";
+  if(h){
+    document.documentElement.style.setProperty("--house", h.c1);
+    document.documentElement.style.setProperty("--house-2", h.c2);
+  }
+  // 立繪
+  const pf = $("ui-portrait");
+  pf.querySelectorAll("svg").forEach(x=>x.remove());
+  pf.insertAdjacentHTML("beforeend", hallySVG(stageOf(), S.house || "gryffindor"));
+  // 能力條
+  const box = $("ui-stats");
+  box.innerHTML = "";
+  STAT_DEFS.forEach(d=>{
+    const v = S.stats[d.key], max = STAT_MAX[d.key];
+    // 999 上限的成長型能力用平方根曲線，前期的成長在條上看得見
+    const ratio = max>=999 ? Math.sqrt(v/max) : v/max;
+    box.insertAdjacentHTML("beforeend", `
+      <div class="stat-row">
+        <span class="stat-name">${d.name}</span>
+        <div class="stat-bar"><div class="stat-fill ${d.cls}" style="width:${clamp(ratio*100,0,100)}%"></div></div>
+        <span class="stat-val">${v}</span>
+      </div>`);
+  });
+}
+
+/* ============================================================
+   存檔
+============================================================ */
+function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }catch(e){} }
+function load(){
+  try{
+    const d = JSON.parse(localStorage.getItem(SAVE_KEY));
+    if(d && typeof d.monthIndex === "number") return d;
+  }catch(e){}
+  return null;
+}
+
+/* ============================================================
+   開場劇情 + 分類帽
+============================================================ */
+function startNewGame(){
+  S = newState();
+  refreshUI();
+  showScreen("screen-main");
+  say([
+    {who:"narr", text:"一九八一年，萬聖節之夜。\n黑魔王在高錐客洞倒下，留下一個額頭帶著閃電疤痕的女嬰——\n「活下來的女孩」，哈莉·波特。"},
+    {who:"dumbledore", text:"賽佛勒斯。這孩子需要一個能真正保護她的人。莉莉的女兒……我只信任你。"},
+    {who:"snape", text:"……阿不思，你瘋了嗎。我？撫養波特的孩子？"},
+    {who:"dumbledore", text:"正因為她是莉莉的孩子。你比任何人都清楚，代價是什麼。"},
+    {who:"snape", text:"…………把她給我。\n（他接過襁褓，動作生硬得像捧著一鍋會爆炸的魔藥。）"},
+    {who:"narr", text:"十年過去。\n蜘蛛尾巷的小屋裡堆滿了魔藥書，也多了一個戴著圓框眼鏡的女孩。\n一九九一年九月，哈莉即將進入霍格華茲——"},
+    {who:"snape", text:"聽好，波特……哈莉。在學校裡，我是你的教授，不是你的監護人。不要指望任何偏袒。"},
+    {who:"hally", text:"是、是的，教授！……那，晚餐還是您做嗎？"},
+    {who:"snape", text:"……閉嘴，去排隊分類。"},
+  ], sortingCeremony);
+}
+
+function sortingCeremony(){
+  say([
+    {who:"narr", text:"大禮堂，燭光懸浮在夜空般的天花板下。\n破舊的分類帽被戴上了哈莉的頭。"},
+    {who:"hat", text:"哦呵……有趣，太有趣了。勇氣、才智、還有一顆倔強的心。\n還被那個魔藥學的傢伙養大——嘖，難辦。\n你自己說吧，小姑娘，你想去哪裡？",
+      choices:[
+        {label:"葛來分多！", then:[
+          {who:"hat", text:"哈！和你父母一樣的選擇——葛來分多！！"},
+          {who:"snape", text:"（遠處傳來一聲幾不可聞的嘆息。）……果然。"},
+        ], effect:HOUSES.gryffindor.bonus, house:"gryffindor"},
+        {label:"史萊哲林", then:[
+          {who:"hat", text:"哦？願意走進蛇的巢穴……有野心。那就——史萊哲林！！"},
+          {who:"snape", text:"（嘴角極輕微地抽動了一下。）……別給我丟臉，波特。"},
+        ], effect:HOUSES.slytherin.bonus, house:"slytherin"},
+        {label:"雷文克勞", then:[
+          {who:"hat", text:"智慧的殿堂歡迎你——雷文克勞！！"},
+          {who:"snape", text:"……至少那裡的學生會念書。可以接受。"},
+        ], effect:HOUSES.ravenclaw.bonus, house:"ravenclaw"},
+        {label:"赫夫帕夫", then:[
+          {who:"hat", text:"忠誠與勤勉之地——赫夫帕夫！！"},
+          {who:"snape", text:"……哼。至少獾不會半夜偷溜出宿舍。大概。"},
+        ], effect:HOUSES.hufflepuff.bonus, house:"hufflepuff"},
+      ]},
+  ], afterSorting);
+}
+
+function afterSorting(){
+  S.flags.sorted = true;
+  save();
+  say([
+    {who:"snape", text:"從今天起，每個月我會給你 40 加隆零用錢。課程要花錢，打工可以賺錢。\n如何安排你的時間，自己決定——我會看著。"},
+    {who:"narr", text:"【遊戲說明】\n每月安排三旬的行程：上課提升能力、打工賺取加隆、休息消除壓力。\n壓力太高會病倒；黑暗傾向太深，會走上另一條路。\n七年後——一九九八年八月，哈莉十八歲時，她的人生將由你的培養決定。"},
+  ], ()=>{ refreshUI(); });
+}
+
+/* ============================================================
+   行程安排
+============================================================ */
+function openSchedule(){
+  if(S.flags.sickPending){
+    // 生病強制休養
+    say([
+      {who:"narr", text:"哈莉發著高燒躺在醫療翼。這個月，只能靜養了。"},
+      {who:"snape", text:"……我早就警告過你。喝下去，別吐出來。\n（他默默放下一瓶自己熬的退燒魔藥，坐在床邊批改考卷到深夜。）"},
+    ], ()=>{
+      S.flags.sickPending = false;
+      applyGains({stress:-60, fitness:-4, snape:6}, true);
+      endOfMonth([]);
+    });
+    return;
+  }
+  S.schedule = [];
+  renderSchedule();
+  showScreen("screen-schedule");
+}
+function scheduledCost(){
+  return S.schedule.reduce((t,id)=>t + Math.max(0, ACT_BY_ID[id].cost), 0);
+}
+function renderSchedule(){
+  for(let i=0;i<3;i++){
+    const el = $("slot-"+i);
+    const id = S.schedule[i];
+    el.className = "slot" + (id ? " filled" : "");
+    el.innerHTML = `<small>${["上旬","中旬","下旬"][i]}</small>${id ? ACT_BY_ID[id].name : "—"}`;
+  }
+  const box = $("ui-acts");
+  box.innerHTML = "";
+  ACTIVITIES.forEach(a=>{
+    const full = S.schedule.length >= 3;
+    const cantAfford = a.cost > 0 && (scheduledCost() + a.cost) > S.money;
+    const b = document.createElement("button");
+    b.className = "act";
+    b.disabled = full || cantAfford;
+    const costTxt = a.cost > 0 ? `−${a.cost}G` : a.cost < 0 ? `＋${-a.cost}G` : "免費";
+    const costCls = a.cost > 0 ? "pay" : a.cost < 0 ? "earn" : "";
+    b.innerHTML = `<div class="a-name">${a.name}<span class="a-cost ${costCls}">${costTxt}</span></div>
+                   <div class="a-desc">${a.desc}</div>`;
+    b.onclick = ()=>{ S.schedule.push(a.id); renderSchedule(); };
+    box.appendChild(b);
+  });
+  $("btn-sched-go").disabled = S.schedule.length < 3;
+}
+
+/* ============================================================
+   月執行
+============================================================ */
+function runMonth(){
+  showScreen("screen-run");
+  const {year,month} = dateOf(S.monthIndex);
+  $("run-title").textContent = `${year}年${month}月　結算`;
+  const list = $("run-list");
+  list.innerHTML = "";
+  $("btn-run-next").style.visibility = "hidden";
+
+  const results = [];
+  const stage = stageOf();
+  const growthMul = stage===1 ? 1 : stage===2 ? 1.1 : 1.2;
+
+  S.schedule.forEach((id)=>{
+    const a = ACT_BY_ID[id];
+    const delta = {};
+    for(const k in a.gains){
+      let v = a.gains[k];
+      if(v > 0 && k !== "stress" && k !== "dark"){
+        v = Math.round(v * growthMul * (0.75 + Math.random()*0.5));
+      } else if(v > 0){
+        v = Math.round(v * (0.8 + Math.random()*0.4));
+      }
+      delta[k] = v;
+    }
+    if(a.cost) delta.money = -a.cost;
+    results.push({act:a, delta});
+  });
+
+  // 逐旬套用 + 顯示
+  results.forEach((r,i)=>{
+    applyGains(r.delta, false);
+    const gains = Object.entries(r.delta).map(([k,v])=>{
+      const cls = (k==="stress"||k==="dark") ? (v>0?"down":"up")
+                : (k==="money") ? (v>0?"up":"down")
+                : (v>=0?"up":"down");
+      return `<span class="gain ${cls}">${STAT_NAME[k]} ${v>0?"+":""}${v}</span>`;
+    }).join("");
+    const el = document.createElement("div");
+    el.className = "run-item";
+    el.innerHTML = `<div class="r-head"><small>${["上旬","中旬","下旬"][i]}</small>${r.act.name}</div>
+                    <div class="r-gains">${gains}</div>`;
+    list.appendChild(el);
+    setTimeout(()=>el.classList.add("show"), 350 + i*650);
+  });
+  setTimeout(()=>{
+    refreshUI();
+    $("btn-run-next").style.visibility = "visible";
+  }, 350 + results.length*650 + 250);
+
+  $("btn-run-next").onclick = ()=> endOfMonth(results.map(r=>r.act.id));
+}
+
+/* ============================================================
+   月末事件
+============================================================ */
+function endOfMonth(actIds){
+  showScreen("screen-main");
+  refreshUI();
+  const chain = [];
+
+  // 風險活動事件
+  if(actIds.includes("forest") && Math.random() < 0.25) chain.push(evForestInjury);
+  if(actIds.includes("restrict") && Math.random() < 0.3) chain.push(evCaughtRestricted);
+
+  // 固定月事件
+  const {month} = dateOf(S.monthIndex);
+  if(month === 6) chain.push(evExam);
+  if(month === 12) chain.push(evChristmas);
+  if(month === 7) chain.push(evBirthday);
+
+  // 隨機事件
+  if(chain.length === 0 || Math.random() < 0.35){
+    const ev = pickRandomEvent();
+    if(ev) chain.push(ev);
+  }
+
+  // 壓力病倒判定（下月生效）
+  if(S.stats.stress >= 100){
+    chain.push(next=>{
+      S.flags.sickPending = true;
+      say([
+        {who:"narr", text:"連日的疲憊累積，哈莉的臉色越來越差……"},
+        {who:"snape", text:"波特。你的魔藥在冒黑煙，你的手在抖。\n——明天開始給我去醫療翼躺著。這是命令。"},
+      ], next);
+    });
+  }
+
+  runChain(chain, ()=>{
+    S.monthIndex++;
+    if(S.monthIndex >= 84){ showEnding(); return; }
+    S.money += 40; // 零用錢
+    refreshUI();
+    save();
+    const {year,month:m} = dateOf(S.monthIndex);
+    showToast(`${year}年${m}月　零用錢 +40 加隆`);
+  });
+}
+function runChain(fns, done){
+  const step = i => (i >= fns.length) ? done() : fns[i](()=>step(i+1));
+  step(0);
+}
+
+/* ============================================================
+   事件庫
+============================================================ */
+function evForestInjury(next){
+  say([
+    {who:"narr", text:"採集途中，一隻八眼巨蛛突然從樹影中撲出！哈莉摔下了斜坡……"},
+    {who:"snape", text:"愚蠢。我說過採集要兩人同行。\n——別動，這藥會有點刺痛。忍著。"},
+    {who:"hally", text:"（教授包紮的手，其實很輕。）……謝謝您。"},
+  ], ()=>{ applyGains({fitness:-6, stress:8, courage:4, snape:5}, true); next(); });
+}
+function evCaughtRestricted(next){
+  say([
+    {who:"narr", text:"深夜的禁書區。一盞燈突然亮起——石內卜就站在書架的陰影裡。"},
+    {who:"snape", text:"好啊。深夜、禁書區、隱形斗篷。波特，你湊齊了被退學的所有條件。",
+      choices:[
+        {label:"老實認錯", then:[
+          {who:"hally", text:"對不起，教授。我只是……想變得更強。"},
+          {who:"snape", text:"……變強不靠偷讀來路不明的咒語。\n明晚來我辦公室。我親自教你——這件事沒有下次。"},
+        ], effect:{snape:8, dark:-3, magic:4}},
+        {label:"倔強頂嘴", then:[
+          {who:"hally", text:"您自己學生時代，不也發明過咒語嗎！"},
+          {who:"snape", text:"…………扣你學院五十分。\n（他轉身離去，斗篷掃過燭火。那背影看起來，罕見地狼狽。）"},
+        ], effect:{courage:6, snape:-6, stress:5}},
+      ]},
+  ], next);
+}
+function evExam(next){
+  const score = S.stats.knowledge + S.stats.magic + rnd(-20,20);
+  const yr = schoolYearOf();
+  const benchmark = 120 + yr*90;
+  let lines;
+  if(score >= benchmark*1.3){
+    lines = [
+      {who:"narr", text:`第${yr}學年期末考——哈莉名列全學年第一！`},
+      {who:"snape", text:"……不要得意忘形。\n（成績單被他看了三遍，才放下。）晚餐加菜。就這一次。"},
+    ];
+    applyGains({charm:6, snape:8, money:30, stress:-5}, false);
+  } else if(score >= benchmark){
+    lines = [
+      {who:"narr", text:`第${yr}學年期末考——哈莉的成績穩居前段。`},
+      {who:"snape", text:"勉強及格的優秀。魔藥學那題本可以更好，回去重寫一遍。"},
+    ];
+    applyGains({snape:4, stress:-3}, false);
+  } else {
+    lines = [
+      {who:"narr", text:`第${yr}學年期末考——這次的成績，不太理想……`},
+      {who:"snape", text:"波特。我養大的孩子，考出這種分數？\n暑假的讀書計畫，我已經替你排好了。每、一、天。"},
+    ];
+    applyGains({stress:10, knowledge:5}, false);
+  }
+  say(lines, next);
+}
+function evChristmas(next){
+  const a = S.stats.snape;
+  let gift;
+  if(a >= 300) gift = [
+    {who:"narr", text:"聖誕節早晨。床尾放著一個包裝笨拙的盒子——裡面是一條祖母綠的圍巾，和一小瓶「福來福喜」幸運藥水。"},
+    {who:"snape", text:"圍巾是店員硬要包的。藥水在關鍵的日子用，不准浪費。\n……聖誕快樂，哈莉。"},
+    {who:"hally", text:"（他叫了我的名字，不是「波特」。）——聖誕快樂，教授！"},
+  ];
+  else if(a >= 120) gift = [
+    {who:"narr", text:"聖誕節早晨。床尾放著一本《高階魔藥製作》，扉頁有密密麻麻的手寫註記。"},
+    {who:"snape", text:"我學生時代的筆記。看得懂多少，是你的本事。"},
+  ];
+  else gift = [
+    {who:"narr", text:"聖誕節早晨。床尾放著一盒標準考試用羽毛筆，和一張字條：「別再咬筆桿。——S.S.」"},
+    {who:"hally", text:"……他到底有沒有在看我啊。（有的，比誰都仔細。）"},
+  ];
+  say(gift, ()=>{ applyGains({stress:-15, snape:5}, true); next(); });
+}
+function evBirthday(next){
+  const age = ageOf()+1;
+  say([
+    {who:"narr", text:`七月三十一日——哈莉 ${age} 歲的生日。`},
+    {who:"snape", text:"蛋糕在桌上。糖霜是我調的，比蜂蜜公爵那些垃圾健康。\n……許願吧。趁蠟燭還沒滴到我的桌布上。"},
+    {who:"hally", text:"（每年生日，蜘蛛尾巷的小屋都會有一個獅子座星圖形狀的蛋糕。）\n我許願——明年也要一起吃蛋糕！"},
+  ], ()=>{ applyGains({stress:-10, snape:4, charm:2}, true); next(); });
+}
+
+const RANDOM_EVENTS = [
+  {id:"hermione", once:true, cond:()=>true, fn(next){
+    say([
+      {who:"narr", text:"圖書館裡，一個蓬鬆棕髮的女孩抱著十本書坐到哈莉對面。"},
+      {who:"hally", text:"（她叫妙麗·格蘭傑。從此，讀書的日子不再孤單。）"},
+    ], ()=>{ applyGains({knowledge:6, charm:3, stress:-6}, true); S.flags.metHermione=true; next(); });
+  }},
+  {id:"quidditch", once:true, cond:()=>S.stats.fitness>=120 && schoolYearOf()>=2, fn(next){
+    say([
+      {who:"narr", text:"魁地奇球場上，哈莉俯衝接住了失控的記憶球——全場屏息。"},
+      {who:"hally", text:"我、我被選為學院搜捕手了！"},
+      {who:"snape", text:"……摔斷脖子之前，先把護具戴好。\n（隔週，一把嶄新的光輪掃帚被匿名送到了她的宿舍。）"},
+    ], ()=>{ S.flags.quidditch=true; applyGains({fitness:10, courage:6, charm:5}, true); next(); });
+  }},
+  {id:"match", cond:()=>S.flags.quidditch, fn(next){
+    const win = (S.stats.fitness + S.stats.courage + rnd(0,80)) > 260;
+    say(win ? [
+      {who:"narr", text:"魁地奇比賽——哈莉在暴雨中抓住了金探子！觀眾席爆出歡呼！"},
+      {who:"snape", text:"（教師席上，某位黑袍教授維持著撲克臉，但手裡的望遠鏡直到終場都沒放下。）"},
+    ] : [
+      {who:"narr", text:"魁地奇比賽——對方搏格的偷襲讓哈莉錯失了金探子。憾負。"},
+      {who:"snape", text:"輸了比賽就哭喪著臉？下週開始，清晨加練。我陪你。"},
+    ], ()=>{ applyGains(win?{charm:6,courage:5,stress:-5}:{stress:8,fitness:5,snape:3}, true); next(); });
+  }},
+  {id:"peeves", cond:()=>true, fn(next){
+    say([
+      {who:"narr", text:"皮皮鬼從盔甲後竄出，把一整桶青蛙卵倒在哈莉頭上！",
+        choices:[
+          {label:"用咒語反擊", then:[{who:"narr", text:"「渦渦拖！」皮皮鬼被吹到了天花板上，吱哇亂叫地逃了。痛快！"}], effect:{magic:5, courage:3}},
+          {label:"默默去洗頭", then:[{who:"narr", text:"……今天真是倒霉的一天。"}], effect:{stress:6}},
+        ]},
+    ], next);
+  }},
+  {id:"hagrid", cond:()=>true, fn(next){
+    say([
+      {who:"narr", text:"海格邀請哈莉到小屋喝茶。岩皮餅硬得能砸暈山怪，但爐火很暖。"},
+      {who:"hally", text:"海格說，我的眼睛跟媽媽一模一樣。……教授也這麼說過，只說過一次。"},
+    ], ()=>{ applyGains({stress:-12, courage:3}, true); next(); });
+  }},
+  {id:"potion-quiz", cond:()=>true, fn(next){
+    const passed = S.stats.knowledge >= 60 + schoolYearOf()*40;
+    say([
+      {who:"snape", text:"突擊測驗。魔獸的毛與牛黃，何者可解情花之毒?三秒內回答。"},
+      passed
+        ? {who:"hally", text:"牛黃！山羊胃裡的結石，可解大部分毒物！"}
+        : {who:"hally", text:"呃……毛、毛?（教授的眉毛以肉眼可見的速度沉了下去。）"},
+      passed
+        ? {who:"snape", text:"……哼。還沒白教。"}
+        : {who:"snape", text:"今晚抄寫《千種神奇藥草》第三章。兩遍。"},
+    ], ()=>{ applyGains(passed?{snape:6,knowledge:3}:{knowledge:6,stress:6}, true); next(); });
+  }},
+  {id:"dream", cond:()=>S.stats.dark>=120, fn(next){
+    say([
+      {who:"voldemort", text:"（夢裡，一個冰冷的聲音貼著耳際低語——）\n力量……你渴望力量,不是嗎?疤痕連接著我們,女孩……",
+        choices:[
+          {label:"掙脫夢境", then:[
+            {who:"hally", text:"滾出我的腦袋！！"},
+            {who:"snape", text:"（半夜，他教她鎖心術。「重複一次。清空思緒。」直到天亮。）"},
+          ], effect:{courage:6, dark:-10, snape:5, stress:4}},
+          {label:"聽下去……", then:[
+            {who:"narr", text:"黑暗的知識如潮水湧入。醒來時，哈莉發現自己站在鏡子前，眼神陌生。"},
+          ], effect:{magic:10, dark:14, stress:8}},
+        ]},
+    ], next);
+  }},
+  {id:"dumbledore-talk", cond:()=>schoolYearOf()>=3, fn(next){
+    say([
+      {who:"dumbledore", text:"檸檬雪寶?……哈莉，你知道嗎，賽佛勒斯每年都會在成績單發下來之前，先到我這裡看一遍。"},
+      {who:"dumbledore", text:"他從不承認。但一個人願意為你熬夜煮退燒藥、匿名送掃帚——那就是愛，孩子。即使他把它藏在黑袍最深的口袋裡。"},
+    ], ()=>{ applyGains({snape:6, stress:-8}, true); next(); });
+  }},
+  {id:"night-walk", cond:()=>true, fn(next){
+    say([
+      {who:"narr", text:"熄燈後的走廊。哈莉想溜去廚房找宵夜，轉角卻撞上一片黑色的袍角。"},
+      {who:"snape", text:"宵禁後遊蕩。理由。",
+        choices:[
+          {label:"「肚子餓了……」", then:[
+            {who:"snape", text:"……跟我來。\n（辦公室裡，他把自己的餅乾罐推了過來。「吃完就滾回宿舍。」）"},
+          ], effect:{snape:6, stress:-6}},
+          {label:"拔腿就跑", then:[
+            {who:"narr", text:"哈莉靠著多年的球場反應甩掉了教授——但隔天全學院都被加了功課。"},
+          ], effect:{fitness:5, courage:4, snape:-4}},
+        ]},
+    ], next);
+  }},
+  {id:"ball", once:true, cond:()=>schoolYearOf()>=4 && S.stats.charm>=150, fn(next){
+    say([
+      {who:"narr", text:"三巫鬥法大賽的聖誕舞會。哈莉穿上禮服袍的那一刻，整個交誼廳安靜了一瞬。"},
+      {who:"snape", text:"（開舞前，他出現在會場邊，替她理了理歪掉的髮夾。）\n站直。你今晚……不會輸給任何人。"},
+    ], ()=>{ applyGains({charm:12, stress:-8, snape:5}, true); next(); });
+  }},
+];
+function pickRandomEvent(){
+  const pool = RANDOM_EVENTS.filter(e =>
+    e.cond() && !(e.once && S.onceEvents.includes(e.id)));
+  if(!pool.length) return null;
+  const ev = pick(pool);
+  if(ev.once) S.onceEvents.push(ev.id);
+  return ev.fn.bind(ev);
+}
+
+/* ============================================================
+   找教授談話（依好感度）
+============================================================ */
+const TALKS_LOW = [
+  {who:"snape", text:"有事?沒事就去念書。我的辦公室不是交誼廳。"},
+  {who:"snape", text:"作業寫完了?……那就預習下週的。問這種問題本身就是浪費時間。"},
+];
+const TALKS_MID = [
+  {who:"snape", text:"……坐吧。正好，這鍋安神劑需要有人試喝。放心，大概不會爆炸。"},
+  {who:"snape", text:"最近的課跟得上?……不是關心你。教出笨學生有損我的名聲，僅此而已。"},
+];
+const TALKS_HIGH = [
+  {who:"snape", text:"這雙眼睛……越來越像她了。\n……沒什麼。茶要涼了，喝。"},
+  {who:"snape", text:"哈莉。無論將來你選哪條路——\n……算了。反正無論哪條，我都會替你把後面守好。去吧。"},
+];
+function talkToSnape(){
+  const a = S.stats.snape;
+  const line = a>=300 ? pick(TALKS_HIGH) : a>=120 ? pick(TALKS_MID) : pick(TALKS_LOW);
+  say([line], ()=>{ applyGains({snape:2, stress:-4}, true); });
+}
+
+/* ============================================================
+   結局判定
+============================================================ */
+const ENDINGS = [
+  {id:"dark", title:"另一個黑魔王", cond:s=>s.dark>=350,
+   desc:"力量的低語終究吞噬了那雙祖母綠的眼睛。哈莉·波特消失在禁忌森林深處，數年後，一個新的名字讓整個魔法界戰慄。而傳聞裡，總有一個黑袍的身影追隨在她左右——他曾發誓要守護莉莉的女兒，無論她走向何方。"},
+  {id:"savior", title:"活下來的女孩・救世主", cond:s=>s.courage>=650&&s.magic>=650&&s.dark<200,
+   desc:"最終決戰之夜，哈莉·波特站在了黑魔王面前——身後是她的教授，手中是他教會她的每一道咒語。當黎明升起，魔法界迎來了自由。慶功宴上，人們高呼救世主之名，而她穿過人群，把金梅林勳章掛在了那件黑袍的胸前。"},
+  {id:"potion", title:"魔藥大師的傳人", cond:s=>s.snape>=380&&s.knowledge>=550,
+   desc:"哈莉成為了史上最年輕的魔藥大師，她改良的狼人藥拯救了無數人。授證典禮上，她的導師坐在第一排——那個永遠板著臉的男人，在起立鼓掌時，被清楚地看見眼眶泛紅。「教授，我們的下一個研究是什麼？」「……先把你的實驗台收乾淨，波特大師。」"},
+  {id:"auror", title:"傲羅辦公室主任", cond:s=>s.courage>=550&&s.magic>=450&&s.dark<250,
+   desc:"正氣凜然的傲羅哈莉·波特，成為了魔法執法部門最年輕的主任。每次出勤前，她都會摸一摸口袋裡那瓶隨身攜帶的急救魔藥——熬製者不肯署名，但每個月都會準時寄到。"},
+  {id:"quidditch", title:"魁地奇世界盃冠軍", cond:s=>s.fitness>=600,
+   desc:"英格蘭國家隊搜捕手哈莉·波特，在世界盃決賽的暴雨中完成了教科書級的朗斯基詐術。頒獎台上她朝貴賓席揮手——那裡坐著一位全程「碰巧路過」的黑袍教授，膝上放著寫滿她七年來每場比賽數據的筆記本。"},
+  {id:"professor", title:"霍格華茲最年輕的教授", cond:s=>s.knowledge>=600&&s.magic>=450,
+   desc:"黑魔法防禦術教室迎來了新任教授——哈莉·波特，霍格華茲百年來最年輕的教員。教師休息室裡，魔藥學教授照例毒舌：「你的教案漏洞百出。」但每一頁的空白處，都已經被密密麻麻的手寫建議填滿了。"},
+  {id:"minister", title:"魔法部的新星", cond:s=>s.charm>=500&&s.knowledge>=400,
+   desc:"優雅、聰慧、無懈可擊——魔法部國際交流司司長哈莉·波特，被《預言家日報》譽為下一任部長的不二人選。每逢重大談判前夜，她總會回蜘蛛尾巷的小屋吃一頓晚餐。「部長閣下也是要人做飯的。」某位教授一邊繫圍裙一邊冷笑。"},
+  {id:"happy", title:"平凡而閃閃發光的日子", cond:()=>true,
+   desc:"哈莉沒有成為傳說。她在霍格莫德開了一間小小的茶館，賣奶油啤酒和自己烤的獅子座星圖蛋糕。每週五打烊後，總有一位黑袍客人坐在窗邊的老位置。「本店招牌，安神花草茶。」「……比我教你的配方差遠了。」「那您還每週都來？」「…………續杯。」"},
+];
+function snapeEpilogue(a){
+  if(a>=380) return "【監護人・賽佛勒斯：家人】十七年前那個雨夜接過的襁褓，如今已是他不再需要隱藏的驕傲。";
+  if(a>=250) return "【監護人・賽佛勒斯：默默守護】他仍然毒舌、仍然板著臉，但哈莉知道，那件黑袍永遠會擋在她身前。";
+  if(a>=120) return "【監護人・賽佛勒斯：彆扭的羈絆】師生之間隔著一整個蜘蛛尾巷的沉默，和誰也不肯先說的一句「謝謝」。";
+  return "【監護人・賽佛勒斯：疏遠】有些話,他終究沒能說出口。書房裡那張合照,積了薄薄的灰。";
+}
+function showEnding(){
+  const st = {...S.stats};
+  const end = ENDINGS.find(e=>e.cond(st));
+  showScreen("screen-ending");
+  $("end-portrait").innerHTML = hallySVG(3, S.house || "gryffindor");
+  $("end-title").textContent = end.title;
+  $("end-desc").innerHTML =
+    `<p>${end.desc}</p><p style="margin-top:10px;color:var(--ink-soft);">${snapeEpilogue(st.snape)}</p>`;
+  const box = $("end-stats");
+  box.innerHTML = "";
+  STAT_DEFS.forEach(d=>{
+    box.insertAdjacentHTML("beforeend",
+      `<div class="end-stat">${d.name.replace(/　/g,"")}<b>${st[d.key]}</b></div>`);
+  });
+  try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+}
+
+/* ============================================================
+   綁定
+============================================================ */
+$("btn-new").onclick = startNewGame;
+$("btn-continue").onclick = ()=>{
+  const d = load();
+  if(d){ S = d; refreshUI(); showScreen("screen-main"); showToast("讀取日誌完成"); }
+};
+$("btn-schedule").onclick = openSchedule;
+$("btn-talk").onclick = talkToSnape;
+$("btn-save").onclick = ()=>{ save(); showToast("已記錄至羊皮紙日誌"); };
+$("btn-sched-clear").onclick = ()=>{ S.schedule = []; renderSchedule(); };
+$("btn-sched-back").onclick = ()=>{ showScreen("screen-main"); };
+$("btn-sched-go").onclick = runMonth;
+$("btn-restart").onclick = ()=>{ showScreen("screen-title"); initTitle(); };
+
+/* ============================================================
+   標題畫面星星 + 初始化
+============================================================ */
+function initTitle(){
+  const stars = $("stars");
+  stars.innerHTML = "";
+  for(let i=0;i<26;i++){
+    const s = document.createElement("span");
+    s.textContent = pick(["✦","✧","⋆","·"]);
+    s.style.left = rnd(2,96)+"%";
+    s.style.top = rnd(2,94)+"%";
+    s.style.fontSize = rnd(8,18)+"px";
+    s.style.animationDelay = (Math.random()*3)+"s";
+    stars.appendChild(s);
+  }
+  $("btn-continue").style.display = load() ? "" : "none";
+}
+initTitle();
+showScreen("screen-title");
+</script>
+</body>
+</html>
