@@ -166,12 +166,19 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
 /* ---------- 行程安排 ---------- */
 #screen-schedule{display:none;padding:12px;flex-direction:column;gap:10px;}
 #screen-schedule.active{display:flex;}
-.slots{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;}
-.slot{
-  flex:1;min-width:140px;text-align:center;padding:9px 6px;border:2px dashed var(--gold-2);
-  border-radius:4px;color:var(--ink-soft);font-size:14px;background:rgba(255,248,226,.35);
+.slot-row{display:flex;gap:6px;align-items:stretch;padding:3px 0;}
+.slot-month{
+  width:104px;flex:none;display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:var(--gold-2);font-weight:700;letter-spacing:.08em;
+  border-right:1px solid rgba(138,109,28,.35);margin-right:2px;
 }
-.slot.filled{border-style:solid;color:var(--ink);font-weight:700;background:#fff6de;}
+.slot{
+  flex:1;min-width:0;text-align:center;padding:6px 4px;border:2px dashed var(--gold-2);
+  border-radius:4px;color:var(--ink-soft);font-size:13px;background:rgba(255,248,226,.35);
+}
+.slot.filled{border-style:solid;color:var(--ink);font-weight:700;background:#fff6de;cursor:pointer;}
+.slot.filled:hover{background:#ffe4d6;text-decoration:line-through;}
+.slot.next{border-color:#b0541e;background:rgba(255,240,214,.7);}
 .slot small{display:block;font-weight:400;color:var(--ink-soft);font-size:11px;letter-spacing:.2em;}
 .acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;padding:10px 12px;}
 .act{
@@ -308,13 +315,9 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
   <!-- ======= 行程安排 ======= -->
   <section id="screen-schedule">
     <div class="panel">
-      <div class="panel-title" style="margin-bottom:0;">本 月 行 程（三旬）</div>
+      <div class="panel-title" style="margin-bottom:0;">行 程 表（最多一季・九旬）</div>
       <div id="sched-note" style="display:none;text-align:center;font-size:12px;color:var(--ink-soft);padding:6px 10px 0;letter-spacing:.08em;"></div>
-      <div class="slots">
-        <div class="slot" id="slot-0"><small>上旬</small>—</div>
-        <div class="slot" id="slot-1"><small>中旬</small>—</div>
-        <div class="slot" id="slot-2"><small>下旬</small>—</div>
-      </div>
+      <div id="slots-grid" style="padding:6px 10px 10px;"></div>
     </div>
     <div class="panel" style="flex:1;overflow:auto;">
       <div class="panel-title" style="margin-bottom:0;">選 擇 活 動</div>
@@ -323,8 +326,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
     <div class="sched-foot">
       <button class="btn small" id="btn-sched-clear">重新安排</button>
       <button class="btn small" id="btn-sched-back">返回</button>
-      <button class="btn small" id="btn-sched-go2" disabled title="同一份行程連續執行兩個月">連排兩個月</button>
-      <button class="btn gold small" id="btn-sched-go" disabled>開始這個月</button>
+      <button class="btn gold small" id="btn-sched-go" disabled>開始執行</button>
     </div>
   </section>
 
@@ -414,7 +416,7 @@ function newState(){
     flags:{sorted:false,quidditch:false,sickPending:false,metHermione:false,wandDream:false,dating:null},
     onceEvents:[],
     schedule:[],
-    repeat:null,   // 「連排兩個月」：下個月要重複的行程
+    queue:[],   // 一季排程：後續月份的行程（每項為一個月的旬列表）
   };
 }
 function dateOf(i){
@@ -926,6 +928,7 @@ function load(){
       // 舊存檔相容：補上後來新增的欄位
       if(d.stats.loveRon === undefined){ d.stats.loveRon = 0; d.stats.loveDraco = 0; }
       if(d.flags.dating === undefined) d.flags.dating = null;
+      if(!Array.isArray(d.queue)) d.queue = [];
       return d;
     }
   }catch(e){}
@@ -1017,24 +1020,48 @@ function actBlockReason(a, month){
   return null;
 }
 function renderSchedule(){
-  const {month} = dateOf(S.monthIndex);
-  const note = month === 6 ? "六月是期末考月，所有課程停課——考前衝刺還是放鬆，自己拿捏。"
-             : (month === 7 || month === 8) ? "暑假！課程停開，但蜘蛛尾巷有「教授特訓」可以上。"
+  const nextIdx = S.schedule.length;                       // 下一個要填的格子
+  const targetMonth = dateOf(S.monthIndex + Math.floor(Math.min(nextIdx, 8) / 3)).month;
+  const note = nextIdx >= 9 ? "九旬已排滿。也可以點擊已排的格子移除。"
+             : targetMonth === 6 ? `接下來排的是 6 月——期末考月，課程停課。`
+             : (targetMonth === 7 || targetMonth === 8) ? `接下來排的是 ${targetMonth} 月——暑假課程停開，可上「教授特訓」。`
              : "";
   $("sched-note").textContent = note;
   $("sched-note").style.display = note ? "" : "none";
-  for(let i=0;i<3;i++){
-    const el = $("slot-"+i);
-    const id = S.schedule[i];
-    el.className = "slot" + (id ? " filled" : "");
-    el.innerHTML = `<small>${["上旬","中旬","下旬"][i]}</small>${id ? ACT_BY_ID[id].name : "—"}`;
+
+  // 三個月 × 三旬的九宮格；沒排滿也能執行，跑到最後一格所在的月份為止
+  const grid = $("slots-grid");
+  grid.innerHTML = "";
+  for(let m = 0; m < 3; m++){
+    const {year, month} = dateOf(S.monthIndex + m);
+    const row = document.createElement("div");
+    row.className = "slot-row";
+    const label = document.createElement("div");
+    label.className = "slot-month";
+    label.textContent = `${year}年${month}月`;
+    row.appendChild(label);
+    for(let i = 0; i < 3; i++){
+      const idx = m * 3 + i;
+      const id = S.schedule[idx];
+      const d = document.createElement("div");
+      d.className = "slot" + (id ? " filled" : "") + (idx === nextIdx ? " next" : "");
+      d.innerHTML = `<small>${["上旬","中旬","下旬"][i]}</small>${id ? ACT_BY_ID[id].name : "—"}`;
+      if(id){
+        d.title = "點擊移除";
+        d.onclick = ()=>{ S.schedule.splice(idx, 1); renderSchedule(); };
+      }
+      row.appendChild(d);
+    }
+    grid.appendChild(row);
   }
+
   const box = $("ui-acts");
   box.innerHTML = "";
   ACTIVITIES.forEach(a=>{
-    const blocked = actBlockReason(a, month);
-    const full = S.schedule.length >= 3;
-    const cantAfford = a.cost > 0 && (scheduledCost() + a.cost) > S.money;
+    const blocked = actBlockReason(a, targetMonth);
+    const full = nextIdx >= 9;
+    // 學費只對第一個月把關；之後的月份執行時若付不起會自動改自習
+    const cantAfford = nextIdx < 3 && a.cost > 0 && (scheduledCost() + a.cost) > S.money;
     const b = document.createElement("button");
     b.className = "act";
     b.disabled = !!blocked || full || cantAfford;
@@ -1045,8 +1072,7 @@ function renderSchedule(){
     b.onclick = ()=>{ S.schedule.push(a.id); renderSchedule(); };
     box.appendChild(b);
   });
-  $("btn-sched-go").disabled = S.schedule.length < 3;
-  $("btn-sched-go2").disabled = S.schedule.length < 3;
+  $("btn-sched-go").disabled = S.schedule.length < 1;
 }
 
 /* ============================================================
@@ -1155,13 +1181,15 @@ function endOfMonth(actIds){
     save();
     const {year,month:m} = dateOf(S.monthIndex);
     showToast(`${year}年${m}月　零用錢 +40 加隆`);
-    // 連排兩個月：自動執行第二個月（停課時段改為圖書館自習）
-    if(S.repeat){
-      const rep = S.repeat; S.repeat = null;
-      if(!S.flags.sickPending){
+    // 一季排程：佇列裡還有後續月份就自動接著執行（停課時段改為圖書館自習）
+    if(S.queue && S.queue.length){
+      if(S.flags.sickPending){
+        S.queue = []; // 病倒了，剩下的行程作廢
+        showToast("哈莉病倒了，之後的行程取消");
+      } else {
         const {month:m2} = dateOf(S.monthIndex);
         let swapped = false;
-        S.schedule = rep.map(id=>{
+        S.schedule = S.queue.shift().map(id=>{
           if(actBlockReason(ACT_BY_ID[id], m2)){ swapped = true; return "library"; }
           return id;
         });
@@ -1815,8 +1843,14 @@ $("btn-talk").onclick = talkToSnape;
 $("btn-save").onclick = ()=>{ save(); showToast("已記錄至羊皮紙日誌"); };
 $("btn-sched-clear").onclick = ()=>{ S.schedule = []; renderSchedule(); };
 $("btn-sched-back").onclick = ()=>{ showScreen("screen-main"); };
-$("btn-sched-go").onclick = ()=>{ S.repeat = null; runMonth(); };
-$("btn-sched-go2").onclick = ()=>{ S.repeat = S.schedule.slice(); runMonth(); };
+$("btn-sched-go").onclick = ()=>{
+  // 切成以月為單位的區塊：第一塊立即執行，其餘進入佇列
+  const chunks = [];
+  for(let i = 0; i < S.schedule.length; i += 3) chunks.push(S.schedule.slice(i, i + 3));
+  S.schedule = chunks.shift() || [];
+  S.queue = chunks;
+  runMonth();
+};
 $("btn-restart").onclick = ()=>{ showScreen("screen-title"); initTitle(); };
 
 /* ============================================================
