@@ -321,6 +321,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
     <div class="sched-foot">
       <button class="btn small" id="btn-sched-clear">重新安排</button>
       <button class="btn small" id="btn-sched-back">返回</button>
+      <button class="btn small" id="btn-sched-go2" disabled title="同一份行程連續執行兩個月">連排兩個月</button>
       <button class="btn gold small" id="btn-sched-go" disabled>開始這個月</button>
     </div>
   </section>
@@ -409,6 +410,7 @@ function newState(){
     flags:{sorted:false,quidditch:false,sickPending:false,metHermione:false,wandDream:false},
     onceEvents:[],
     schedule:[],
+    repeat:null,   // 「連排兩個月」：下個月要重複的行程
   };
 }
 function dateOf(i){
@@ -758,7 +760,7 @@ function dlgNext(){
       if(item.choices) showChoices(item.choices);
       else $("dlg-next").style.visibility = "visible";
     }
-  }, 26);
+  }, 18);
 }
 function showChoices(choices){
   const box = $("dlg-choices");
@@ -1013,6 +1015,7 @@ function renderSchedule(){
     box.appendChild(b);
   });
   $("btn-sched-go").disabled = S.schedule.length < 3;
+  $("btn-sched-go2").disabled = S.schedule.length < 3;
 }
 
 /* ============================================================
@@ -1030,8 +1033,11 @@ function runMonth(){
   const stage = stageOf();
   const growthMul = stage===1 ? 1 : stage===2 ? 1.1 : 1.2;
 
+  let moneySim = S.money; // 連排的第二個月可能付不起學費 → 改自習
   S.schedule.forEach((id)=>{
-    const a = ACT_BY_ID[id];
+    let a = ACT_BY_ID[id], note = "";
+    if(a.cost > 0 && moneySim < a.cost){ a = ACT_BY_ID.library; note = "加隆不足，改為圖書館自習"; }
+    moneySim -= a.cost;
     const delta = {};
     for(const k in a.gains){
       let v = a.gains[k];
@@ -1043,7 +1049,7 @@ function runMonth(){
       delta[k] = v;
     }
     if(a.cost) delta.money = -a.cost;
-    results.push({act:a, delta});
+    results.push({act:a, delta, note});
   });
 
   // 逐旬套用 + 顯示
@@ -1057,15 +1063,16 @@ function runMonth(){
     }).join("");
     const el = document.createElement("div");
     el.className = "run-item";
-    el.innerHTML = `<div class="r-head"><small>${["上旬","中旬","下旬"][i]}</small>${r.act.name}</div>
+    const noteHtml = r.note ? `<small style="color:var(--bad);margin-left:8px;">（${r.note}）</small>` : "";
+    el.innerHTML = `<div class="r-head"><small>${["上旬","中旬","下旬"][i]}</small>${r.act.name}${noteHtml}</div>
                     <div class="r-gains">${gains}</div>`;
     list.appendChild(el);
-    setTimeout(()=>el.classList.add("show"), 350 + i*650);
+    setTimeout(()=>el.classList.add("show"), 250 + i*450);
   });
   setTimeout(()=>{
     refreshUI();
     $("btn-run-next").style.visibility = "visible";
-  }, 350 + results.length*650 + 250);
+  }, 250 + results.length*450 + 200);
 
   $("btn-run-next").onclick = ()=> endOfMonth(results.map(r=>r.act.id));
 }
@@ -1081,6 +1088,13 @@ function endOfMonth(actIds){
   // 風險活動事件
   if(actIds.includes("forest") && Math.random() < 0.25) chain.push(evForestInjury);
   if(actIds.includes("restrict") && Math.random() < 0.3) chain.push(evCaughtRestricted);
+
+  // 課程／打工專屬小事件（45% 機率觸發一則）
+  const flavorIds = actIds.filter(id => ACT_EVENTS[id]);
+  if(flavorIds.length && Math.random() < 0.45){
+    const ev = pick(ACT_EVENTS[pick(flavorIds)]);
+    chain.push(next => say(ev.lines, ()=>{ if(ev.fx) applyGains(ev.fx, true); next(); }));
+  }
 
   // 固定月事件
   const {month} = dateOf(S.monthIndex);
@@ -1115,6 +1129,22 @@ function endOfMonth(actIds){
     save();
     const {year,month:m} = dateOf(S.monthIndex);
     showToast(`${year}年${m}月　零用錢 +40 加隆`);
+    // 連排兩個月：自動執行第二個月（停課時段改為圖書館自習）
+    if(S.repeat){
+      const rep = S.repeat; S.repeat = null;
+      if(!S.flags.sickPending){
+        const {month:m2} = dateOf(S.monthIndex);
+        let swapped = false;
+        S.schedule = rep.map(id=>{
+          if(actBlockReason(ACT_BY_ID[id], m2)){ swapped = true; return "library"; }
+          return id;
+        });
+        setTimeout(()=>{
+          if(swapped) showToast("停課的時段自動改為圖書館自習");
+          runMonth();
+        }, 700);
+      }
+    }
   });
 }
 function runChain(fns, done){
@@ -1328,6 +1358,82 @@ const RANDOM_EVENTS = [
     ], ()=>{ applyGains({charm:12, stress:-8, snape:5}, true); next(); });
   }},
 ];
+/* ============================================================
+   課程／打工專屬小事件（月結算後機率觸發，短對話＋小獎勵）
+============================================================ */
+const ACT_EVENTS = {
+  potion:[
+    {lines:[{who:"snape",text:"今天的縮身水……色澤、濃度、火候。\n（他盯著坩堝看了很久。）滿分。下課。"},
+            {who:"hally",text:"（教授給了滿分！這比拿到魁地奇獎盃還稀有！）"}], fx:{snape:3, knowledge:2}},
+    {lines:[{who:"narr",text:"轟——隔壁的坩堝炸了，黏液濺了哈莉滿頭。"},
+            {who:"snape",text:"波特，去洗。奈威·隆巴頓，留下來把地板刷十遍。"}], fx:{stress:3, knowledge:2}},
+  ],
+  charms:[
+    {lines:[{who:"narr",text:"「溫咖癲啦唯啊薩！」哈莉的羽毛全班第一個飄了起來，孚立維教授高興得從書堆上跳下來。"}], fx:{magic:3}},
+    {lines:[{who:"hermione",text:"哈莉！你的召喚咒把我的書包咒過來了啦——連我一起！"},
+            {who:"hally",text:"對、對不起！（但威力越來越強了，嘿嘿。）"}], fx:{magic:2, stress:2}},
+  ],
+  dada:[
+    {lines:[{who:"narr",text:"幻形怪衝出櫃子，變成了佛地魔的影子——哈莉深吸一口氣：「叱叱，荒唐！」\n黑影瞬間穿上了粉紅色的蓬蓬裙。全班大笑。"}], fx:{courage:3, stress:-2}},
+    {lines:[{who:"draco",text:"決鬥社？好啊波特，讓你見識純血的實力——"},
+            {who:"narr",text:"三十秒後，馬份被自己的咒語反彈黏在了天花板上。"}], fx:{magic:2, courage:2}},
+  ],
+  transf:[
+    {lines:[{who:"narr",text:"麥教授拿起哈莉變出的銀針，對著燭光看了看：「針眼工整。波特小姐，加十分。」\n（隔壁的魔藥教授聽說後冷哼了一聲，但嘴角是翹的。）"}], fx:{knowledge:3}},
+    {lines:[{who:"narr",text:"茶壺變陸龜的作業出了點意外——哈莉的茶壺長出了四條刺蝟腿，滿教室亂竄。"}], fx:{knowledge:2, stress:2}},
+  ],
+  flying:[
+    {lines:[{who:"narr",text:"五十呎的俯衝急停！魁地奇隊長看得目瞪口呆：「你——週六來選拔賽！一定要來！」"}], fx:{fitness:3, courage:2}},
+    {lines:[{who:"narr",text:"一陣側風。哈莉連人帶帚栽進了沙坑，吃了滿嘴沙子。\n（遠處某扇教室窗戶後面，有人默默放下了窗簾和心。）"}], fx:{fitness:2, stress:3}},
+  ],
+  dance:[
+    {lines:[{who:"ron",text:"呃、那個，舞伴練習……我可以嗎？先說好我會踩到你的腳。"},
+            {who:"narr",text:"他真的踩了。八次。但兩個人笑到直不起腰。"}], fx:{charm:2, stress:-2}},
+    {lines:[{who:"narr",text:"禮儀老師當眾稱讚：「波特小姐的儀態，是我教過最出色的。」\n路過的石內卜：「哼。」（翻譯：那當然，也不看是誰養大的。）"}], fx:{charm:3}},
+  ],
+  tutor:[
+    {lines:[{who:"narr",text:"地下室決鬥練習——哈莉的繳械咒第一次擦過了教授的袖子！"},
+            {who:"snape",text:"……進步了。明天加倍。"}], fx:{magic:3, snape:2}},
+    {lines:[{who:"snape",text:"（深夜，藥劑在爐上咕嘟作響。）你母親熬這鍋藥的時候，總愛偷加兩滴薄荷。\n……別學她。但今天可以加。"}], fx:{snape:3, stress:-3}},
+  ],
+  library:[
+    {lines:[{who:"narr",text:"舊校刊裡的一張照片——魁地奇球場上的年輕男孩，和看台上笑著的紅髮女孩。\n爸爸，媽媽。哈莉把那一頁小心地抄了下來。"}], fx:{stress:-3, courage:2}},
+    {lines:[{who:"hermione",text:"這本《中世紀魔咒源流》超冷門但超有用！我幫你劃好重點了——三種顏色的那種。"}], fx:{knowledge:3}},
+  ],
+  restrict:[
+    {lines:[{who:"narr",text:"這一頁的咒語連插圖都在蠕動。哈莉的心跳如鼓，卻捨不得把書闔上……"}], fx:{magic:3, dark:2}},
+    {lines:[{who:"narr",text:"喵——拿樂絲太太的眼睛在黑暗中發亮！哈莉抓著書屏住呼吸，直到飛七的腳步聲遠去。"}], fx:{courage:2, stress:4}},
+  ],
+  owlpost:[
+    {lines:[{who:"narr",text:"一隻迷路的貓頭鷹認定了哈莉的肩膀是牠家。失主巫師千恩萬謝，塞來一把西可當謝禮。"}], fx:{money:10, charm:1}},
+    {lines:[{who:"narr",text:"包裹上寫著「內有活物・小心」。哈莉沒看到。\n那隻火螃蟹也沒打算讓她看到。"}], fx:{stress:3, fitness:1}},
+  ],
+  candy:[
+    {lines:[{who:"narr",text:"老闆娘教哈莉做新口味的乳脂軟糖，試吃品「不小心」多做了一大盒。"}], fx:{charm:2, stress:-2}},
+    {lines:[{who:"narr",text:"霍格華茲的週末大客潮！哈莉一個人顧三個櫃檯，小費裝滿了圍裙口袋。"}], fx:{money:8, fitness:1}},
+  ],
+  broom:[
+    {lines:[{who:"narr",text:"角落的老巫師講起獵龍的往事，滿座喝采。他敬了哈莉一杯奶油啤酒：「小姑娘，你眼裡有火。」"}], fx:{courage:2, charm:1}},
+    {lines:[{who:"narr",text:"托盤一歪——三杯奶油啤酒澆在了魔法部官員的頭上。今天的小費，賠光了。"}], fx:{money:-5, stress:3}},
+  ],
+  herb:[
+    {lines:[{who:"narr",text:"耳罩滑了一半，魔蘋果的哭嚎直鑽腦門。哈莉眼前發黑地撐完了換盆。"}], fx:{stress:4, fitness:1}},
+    {lines:[{who:"narr",text:"芽菜教授塞來一小包跳跳鱗莖的種子：「拿去賣或拿去種，都是好東西。」"}], fx:{money:10, knowledge:2}},
+  ],
+  forest:[
+    {lines:[{who:"narr",text:"林間空地，人馬翡冷翠仰望星空：「火星今夜很亮，小巫師。但你的星，比它更倔強。」"}], fx:{courage:3}},
+    {lines:[{who:"narr",text:"一隻銀白色的獨角獸幼崽踏著月光走近，把鼻尖輕輕抵在哈莉的掌心。"}], fx:{stress:-4, charm:2}},
+  ],
+  rest:[
+    {lines:[{who:"ron",text:"野餐！妙麗帶了書，我帶了媽媽做的餡餅，你只要負責躺著曬太陽就行！"}], fx:{stress:-4}},
+    {lines:[{who:"narr",text:"難得睡到自然醒。夢裡有蜘蛛尾巷的爐火、蛋糕，和一個坐在搖椅上看書的黑袍身影。"}], fx:{stress:-3, snape:1}},
+  ],
+  hogsmeade:[
+    {lines:[{who:"narr",text:"尖叫屋探險！結果什麼鬼都沒有，只有三個學生自己嚇自己，笑著跑下山坡。"}], fx:{courage:2, stress:-2}},
+    {lines:[{who:"narr",text:"巧克力蛙的卡片是——閃閃發光的「阿不思·鄧不利多（限定簽名版）」！全店的人都圍過來看。"}], fx:{charm:1, stress:-3}},
+  ],
+};
+
 /* ============================================================
    學年主線大事件（每學年 5 月觸發）
 ============================================================ */
@@ -1553,7 +1659,8 @@ $("btn-talk").onclick = talkToSnape;
 $("btn-save").onclick = ()=>{ save(); showToast("已記錄至羊皮紙日誌"); };
 $("btn-sched-clear").onclick = ()=>{ S.schedule = []; renderSchedule(); };
 $("btn-sched-back").onclick = ()=>{ showScreen("screen-main"); };
-$("btn-sched-go").onclick = runMonth;
+$("btn-sched-go").onclick = ()=>{ S.repeat = null; runMonth(); };
+$("btn-sched-go2").onclick = ()=>{ S.repeat = S.schedule.slice(); runMonth(); };
 $("btn-restart").onclick = ()=>{ showScreen("screen-title"); initTitle(); };
 
 /* ============================================================
