@@ -745,6 +745,17 @@ function dlgNext(){
     return;
   }
   dlg.cur = item;
+  // 「能力變化」頁：套用並列出這個事件的所有數值影響
+  if(item.gains){
+    applyGains(item.gains, false);
+    const face = $("dlg-face");
+    face.classList.add("none"); face.innerHTML = "";
+    $("dlg-name").textContent = "── 能力變化 ──";
+    $("dlg-choices").innerHTML = "";
+    $("dlg-text").innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:6px;padding:6px 0;">${gainChips(item.gains)}</div>`;
+    $("dlg-next").style.visibility = "visible";
+    return;
+  }
   const who = item.who || "narr";
   const faceKey = (item.face !== undefined) ? item.face : (FACES[who] ? who : "none");
   const face = $("dlg-face");
@@ -777,8 +788,9 @@ function showChoices(choices){
       dlg.cur = null; box.innerHTML = "";
       if(c.house){ S.house = c.house; refreshUI(); }
       if(c.dating){ S.flags.dating = c.dating; }
-      if(c.then) dlg.queue = c.then.concat(dlg.queue);
-      if(c.effect) applyGains(c.effect, true);
+      const seq = (c.then || []).slice();
+      if(c.effect) seq.push({gains:c.effect}); // 選項效果也逐項列出
+      dlg.queue = seq.concat(dlg.queue);
       dlgNext();
     };
     box.appendChild(b);
@@ -805,6 +817,15 @@ function applyGains(g, toast){
   }
   refreshUI();
   if(toast && parts.length) showToast(parts.join("　"));
+}
+// 產生數值變化標籤（結算畫面與事件「能力變化」頁共用）
+function gainChips(g){
+  return Object.entries(g).map(([k,v])=>{
+    const cls = (k==="stress"||k==="dark") ? (v>0?"down":"up")
+              : (k==="money") ? (v>0?"up":"down")
+              : (v>=0?"up":"down");
+    return `<span class="gain ${cls}">${STAT_NAME[k]} ${v>0?"+":""}${v}</span>`;
+  }).join("");
 }
 let toastTimer = null;
 function showToast(msg){
@@ -974,9 +995,9 @@ function openSchedule(){
     say([
       {who:"narr", text:"哈莉發著高燒躺在醫療翼。這個月，只能靜養了。"},
       {who:"snape", text:"……我早就警告過你。喝下去，別吐出來。\n（他默默放下一瓶自己熬的退燒魔藥，坐在床邊批改考卷到深夜。）"},
+      {gains:{stress:-60, fitness:-4, snape:6}},
     ], ()=>{
       S.flags.sickPending = false;
-      applyGains({stress:-60, fitness:-4, snape:6}, true);
       endOfMonth([]);
     });
     return;
@@ -1065,12 +1086,7 @@ function runMonth(){
   // 逐旬套用 + 顯示
   results.forEach((r,i)=>{
     applyGains(r.delta, false);
-    const gains = Object.entries(r.delta).map(([k,v])=>{
-      const cls = (k==="stress"||k==="dark") ? (v>0?"down":"up")
-                : (k==="money") ? (v>0?"up":"down")
-                : (v>=0?"up":"down");
-      return `<span class="gain ${cls}">${STAT_NAME[k]} ${v>0?"+":""}${v}</span>`;
-    }).join("");
+    const gains = gainChips(r.delta);
     const el = document.createElement("div");
     el.className = "run-item";
     const noteHtml = r.note ? `<small style="color:var(--bad);margin-left:8px;">（${r.note}）</small>` : "";
@@ -1103,7 +1119,7 @@ function endOfMonth(actIds){
   const flavorIds = actIds.filter(id => ACT_EVENTS[id]);
   if(flavorIds.length && Math.random() < 0.45){
     const ev = pick(ACT_EVENTS[pick(flavorIds)]);
-    chain.push(next => say(ev.lines, ()=>{ if(ev.fx) applyGains(ev.fx, true); next(); }));
+    chain.push(next => say(ev.fx ? ev.lines.concat([{gains:ev.fx}]) : ev.lines, next));
   }
 
   // 固定月事件
@@ -1170,7 +1186,8 @@ function evForestInjury(next){
     {who:"narr", text:"採集途中，一隻八眼巨蛛突然從樹影中撲出！哈莉摔下了斜坡……"},
     {who:"snape", text:"愚蠢。我說過採集要兩人同行。\n——別動，這藥會有點刺痛。忍著。"},
     {who:"hally", text:"（教授包紮的手，其實很輕。）……謝謝您。"},
-  ], ()=>{ applyGains({fitness:-6, stress:8, courage:4, snape:5}, true); next(); });
+    {gains:{fitness:-6, stress:8, courage:4, snape:5}},
+  ], next);
 }
 function evCaughtRestricted(next){
   say([
@@ -1192,26 +1209,27 @@ function evExam(next){
   const score = S.stats.knowledge + S.stats.magic + rnd(-20,20);
   const yr = schoolYearOf();
   const benchmark = 120 + yr*90;
-  let lines;
+  let lines, fx;
   if(score >= benchmark*1.3){
     lines = [
       {who:"narr", text:`第${yr}學年期末考——哈莉名列全學年第一！`},
       {who:"snape", text:"……不要得意忘形。\n（成績單被他看了三遍，才放下。）晚餐加菜。就這一次。"},
     ];
-    applyGains({charm:6, snape:8, money:30, stress:-5}, false);
+    fx = {charm:6, snape:8, money:30, stress:-5};
   } else if(score >= benchmark){
     lines = [
       {who:"narr", text:`第${yr}學年期末考——哈莉的成績穩居前段。`},
       {who:"snape", text:"勉強及格的優秀。魔藥學那題本可以更好，回去重寫一遍。"},
     ];
-    applyGains({snape:4, stress:-3}, false);
+    fx = {snape:4, stress:-3};
   } else {
     lines = [
       {who:"narr", text:`第${yr}學年期末考——這次的成績，不太理想……`},
       {who:"snape", text:"波特。我養大的孩子，考出這種分數？\n暑假的讀書計畫，我已經替你排好了。每、一、天。"},
     ];
-    applyGains({stress:10, knowledge:5}, false);
+    fx = {stress:10, knowledge:5};
   }
+  lines.push({gains:fx});
   say(lines, next);
 }
 function evChristmas(next){
@@ -1230,7 +1248,8 @@ function evChristmas(next){
     {who:"narr", text:"聖誕節早晨。床尾放著一盒標準考試用羽毛筆，和一張字條：「別再咬筆桿。——S.S.」"},
     {who:"hally", text:"……他到底有沒有在看我啊。（有的，比誰都仔細。）"},
   ];
-  say(gift, ()=>{ applyGains({stress:-15, snape:5}, true); next(); });
+  gift.push({gains:{stress:-15, snape:5}});
+  say(gift, next);
 }
 function evBirthday(next){
   const age = ageOf()+1;
@@ -1238,7 +1257,8 @@ function evBirthday(next){
     {who:"narr", text:`七月三十一日——哈莉 ${age} 歲的生日。`},
     {who:"snape", text:"蛋糕在桌上。糖霜是我調的，比蜂蜜公爵那些垃圾健康。\n……許願吧。趁蠟燭還沒滴到我的桌布上。"},
     {who:"hally", text:"（每年生日，蜘蛛尾巷的小屋都會有一個獅子座星圖形狀的蛋糕。）\n我許願——明年也要一起吃蛋糕！"},
-  ], ()=>{ applyGains({stress:-10, snape:4, charm:2}, true); next(); });
+    {gains:{stress:-10, snape:4, charm:2}},
+  ], next);
 }
 
 const RANDOM_EVENTS = [
@@ -1247,19 +1267,19 @@ const RANDOM_EVENTS = [
       {who:"narr", text:"圖書館裡，一個蓬鬆棕髮的女孩抱著十本書坐到哈莉對面。"},
       {who:"hermione", text:"你的變形學筆記漏了三個重點。……要一起讀嗎？我叫妙麗·格蘭傑。"},
       {who:"hally", text:"（從此，讀書的日子不再孤單。）"},
-    ], ()=>{ applyGains({knowledge:6, charm:3, stress:-6}, true); S.flags.metHermione=true; next(); });
+    , {gains:{knowledge:6, charm:3, stress:-6}}], ()=>{ S.flags.metHermione=true; next(); });
   }},
   {id:"hermione-study", cond:()=>S.flags.metHermione, fn(next){
     say([
       {who:"hermione", text:"考前重點我整理成三種顏色了！紅色是必考、藍色是可能考、綠色是「教授心情不好時會考」。"},
       {who:"hally", text:"綠色那疊怎麼比紅色還厚啊……"},
-    ], ()=>{ applyGains({knowledge:7, stress:4}, true); next(); });
+    , {gains:{knowledge:7, stress:4}}], next);
   }},
   {id:"ron-chess", cond:()=>true, fn(next){
     say([
       {who:"ron", text:"巫師棋，來一盤？先說好，我可是從來沒輸過——輸的人請奶油啤酒！"},
       {who:"narr", text:"棋盤上殺得天昏地暗。榮恩的騎士砸碎了哈莉最後的城堡——但交誼廳的爐火旁，笑聲一直沒停。"},
-    ], ()=>{ applyGains({knowledge:3, stress:-10, charm:2, loveRon:4}, true); next(); });
+    , {gains:{knowledge:3, stress:-10, charm:2, loveRon:4}}], next);
   }},
   {id:"draco-taunt", cond:()=>true, fn(next){
     say([
@@ -1280,14 +1300,14 @@ const RANDOM_EVENTS = [
     say([
       {who:"luna", text:"你頭頂上繞著好多騷擾虻呢。牠們最喜歡鑽進煩惱太多的腦袋了。\n跟我去餵騎士墜鬼馬吧，牠們只讓見過悲傷的人看見——牠們很溫柔喔。"},
       {who:"narr", text:"禁忌森林邊，看不見的鬃毛從指尖滑過。不知道為什麼，心裡的重量輕了一些。"},
-    ], ()=>{ applyGains({stress:-14, dark:-4, courage:2}, true); next(); });
+    , {gains:{stress:-14, dark:-4, courage:2}}], next);
   }},
   {id:"quidditch", once:true, cond:()=>S.stats.fitness>=120 && schoolYearOf()>=2, fn(next){
     say([
       {who:"narr", text:"魁地奇球場上，哈莉俯衝接住了失控的記憶球——全場屏息。"},
       {who:"hally", text:"我、我被選為學院搜捕手了！"},
       {who:"snape", text:"……摔斷脖子之前，先把護具戴好。\n（隔週，一把嶄新的光輪掃帚被匿名送到了她的宿舍。）"},
-    ], ()=>{ S.flags.quidditch=true; applyGains({fitness:10, courage:6, charm:5}, true); next(); });
+    , {gains:{fitness:10, courage:6, charm:5}}], ()=>{ S.flags.quidditch=true; next(); });
   }},
   {id:"match", cond:()=>S.flags.quidditch, fn(next){
     const win = (S.stats.fitness + S.stats.courage + rnd(0,80)) > 260;
@@ -1297,7 +1317,7 @@ const RANDOM_EVENTS = [
     ] : [
       {who:"narr", text:"魁地奇比賽——對方搏格的偷襲讓哈莉錯失了金探子。憾負。"},
       {who:"snape", text:"輸了比賽就哭喪著臉？下週開始，清晨加練。我陪你。"},
-    ], ()=>{ applyGains(win?{charm:6,courage:5,stress:-5}:{stress:8,fitness:5,snape:3}, true); next(); });
+    , {gains:win?{charm:6,courage:5,stress:-5}:{stress:8,fitness:5,snape:3}}], next);
   }},
   {id:"peeves", cond:()=>true, fn(next){
     say([
@@ -1313,7 +1333,7 @@ const RANDOM_EVENTS = [
       {who:"hagrid", text:"哈莉！來來來，剛烤好的岩皮餅——小心牙。牙床骨還是要的嘛。"},
       {who:"hagrid", text:"你這雙眼睛啊，跟你媽媽一模一樣。莉莉當年最疼我這些小動物了。"},
       {who:"hally", text:"（教授也這麼說過。只說過一次。）"},
-    ], ()=>{ applyGains({stress:-12, courage:3}, true); next(); });
+    , {gains:{stress:-12, courage:3}}], next);
   }},
   {id:"potion-quiz", cond:()=>true, fn(next){
     const passed = S.stats.knowledge >= 60 + schoolYearOf()*40;
@@ -1325,7 +1345,7 @@ const RANDOM_EVENTS = [
       passed
         ? {who:"snape", text:"……哼。還沒白教。"}
         : {who:"snape", text:"今晚抄寫《千種神奇藥草》第三章。兩遍。"},
-    ], ()=>{ applyGains(passed?{snape:6,knowledge:3}:{knowledge:6,stress:6}, true); next(); });
+    , {gains:passed?{snape:6,knowledge:3}:{knowledge:6,stress:6}}], next);
   }},
   {id:"dream", cond:()=>S.stats.dark>=120, fn(next){
     say([
@@ -1345,7 +1365,7 @@ const RANDOM_EVENTS = [
     say([
       {who:"dumbledore", text:"檸檬雪寶?……哈莉，你知道嗎，賽佛勒斯每年都會在成績單發下來之前，先到我這裡看一遍。"},
       {who:"dumbledore", text:"他從不承認。但一個人願意為你熬夜煮退燒藥、匿名送掃帚——那就是愛，孩子。即使他把它藏在黑袍最深的口袋裡。"},
-    ], ()=>{ applyGains({snape:6, stress:-8}, true); next(); });
+    , {gains:{snape:6, stress:-8}}], next);
   }},
   {id:"night-walk", cond:()=>true, fn(next){
     say([
@@ -1387,13 +1407,13 @@ const RANDOM_EVENTS = [
     say([
       {who:"ron", text:"呃、這個給你。我媽織的……R 開頭，是、是「榮恩的朋友」的意思啦！"},
       {who:"narr", text:"酒紅色的毛衣有點扎，卻暖得不可思議。"},
-    ], ()=>{ applyGains({loveRon:8, stress:-5}, true); next(); });
+    , {gains:{loveRon:8, stress:-5}}], next);
   }},
   {id:"ron-guard", once:true, cond:()=>S.stats.loveRon>=60, fn(next){
     say([
       {who:"narr", text:"魁地奇比賽，失控的搏格直衝哈莉而來——看台上的榮恩喊破了嗓子提醒她閃開，隔天完全失聲。"},
       {who:"ron", text:"（沙啞）值、值得……你沒被砸到就好。"},
-    ], ()=>{ applyGains({loveRon:8, courage:2}, true); next(); });
+    , {gains:{loveRon:8, courage:2}}], next);
   }},
   {id:"ron-confess", once:true, cond:()=>S.stats.loveRon>=80 && schoolYearOf()>=5 && !S.flags.dating, fn(next){
     say([
@@ -1415,13 +1435,13 @@ const RANDOM_EVENTS = [
     say([
       {who:"draco", text:"你上週缺課的筆記。……別誤會！只是看不慣有人拖低年級平均分而已。"},
       {who:"narr", text:"筆記工整得驚人，重點處還細心地畫了線。（他絕對謄過不只一遍。）"},
-    ], ()=>{ applyGains({loveDraco:8, knowledge:2}, true); next(); });
+    , {gains:{loveDraco:8, knowledge:2}}], next);
   }},
   {id:"draco-tower", once:true, cond:()=>S.stats.loveDraco>=60, fn(next){
     say([
       {who:"draco", text:"（天文塔上撞見。）家族、聯姻、繼承人……有時候真羨慕你，波特。至少你能選自己的路。"},
       {who:"hally", text:"你也可以。「路是走出來的」——這句話，是我教授說的。"},
-    ], ()=>{ applyGains({loveDraco:8, stress:-4}, true); next(); });
+    , {gains:{loveDraco:8, stress:-4}}], next);
   }},
   {id:"draco-confess", once:true, cond:()=>S.stats.loveDraco>=80 && schoolYearOf()>=5 && !S.flags.dating, fn(next){
     say([
@@ -1442,43 +1462,43 @@ const RANDOM_EVENTS = [
   {id:"house-gry", cond:()=>S.house==="gryffindor", fn(next){
     say([
       {who:"narr", text:"葛來分多交誼廳之夜——衛斯理雙胞胎拉著哈莉試用新發明「打嗝糖」，整座塔樓笑到人像都在抖。"},
-    ], ()=>{ applyGains({stress:-8, courage:2}, true); next(); });
+    , {gains:{stress:-8, courage:2}}], next);
   }},
   {id:"house-gry2", once:true, cond:()=>S.house==="gryffindor", fn(next){
     say([
       {who:"narr", text:"深夜，一個迷路的一年級生在走廊哭。哈莉把自己的斗篷披在她身上，一路把她送回胖女士人像前。"},
       {who:"narr", text:"「口令：勇氣。」——胖女士朝哈莉眨了眨眼：「妳很有葛來分多的樣子，親愛的。」"},
-    ], ()=>{ applyGains({courage:4, charm:2}, true); next(); });
+    , {gains:{courage:4, charm:2}}], next);
   }},
   {id:"house-sly", cond:()=>S.house==="slytherin", fn(next){
     say([
       {who:"narr", text:"史萊哲林交誼廳的湖底之窗外，一條人魚緩緩游過，朝哈莉揮了揮手。\n綠色的光影裡，連呼吸都安靜了下來。"},
-    ], ()=>{ applyGains({magic:3, stress:-5}, true); next(); });
+    , {gains:{magic:3, stress:-5}}], next);
   }},
   {id:"house-sly2", once:true, cond:()=>S.house==="slytherin", fn(next){
     say([
       {who:"snape", text:"（院長訓話。）史萊哲林在外面受多少白眼，我們自己就要多團結。\n記住：野心不是罪，蛇也懂得取暖。……尤其是你，波特。別讓他們看扁。"},
-    ], ()=>{ applyGains({snape:5, courage:2}, true); next(); });
+    , {gains:{snape:5, courage:2}}], next);
   }},
   {id:"house-rav", cond:()=>S.house==="ravenclaw", fn(next){
     say([
       {who:"narr", text:"雷文克勞塔的門環出題：「什麼東西，越分享越多？」\n哈莉想了想：「知識。」——銅門緩緩敞開，門後響起一片讚許的掌聲。"},
-    ], ()=>{ applyGains({knowledge:4, charm:2}, true); next(); });
+    , {gains:{knowledge:4, charm:2}}], next);
   }},
   {id:"house-rav2", once:true, cond:()=>S.house==="ravenclaw", fn(next){
     say([
       {who:"narr", text:"午夜的天文觀測會。整個學院擠在塔頂看英仙座流星雨，有人低聲唸出每顆星的名字，像唸一首很長的詩。"},
-    ], ()=>{ applyGains({knowledge:3, magic:2, stress:2}, true); next(); });
+    , {gains:{knowledge:3, magic:2, stress:2}}], next);
   }},
   {id:"house-huf", cond:()=>S.house==="hufflepuff", fn(next){
     say([
       {who:"narr", text:"赫夫帕夫地下室飄著剛出爐的派香——廚房的家庭小精靈們最疼這群獾，永遠留一塊最大的給哈莉。"},
-    ], ()=>{ applyGains({stress:-8, charm:2}, true); next(); });
+    , {gains:{stress:-8, charm:2}}], next);
   }},
   {id:"house-huf2", once:true, cond:()=>S.house==="hufflepuff", fn(next){
     say([
       {who:"narr", text:"全學院的園藝日！大家一起替溫室翻土、給獾窩補漆，晚上累癱在一起喝熱蜂蜜牛奶。\n「在赫夫帕夫，沒有人是一個人。」"},
-    ], ()=>{ applyGains({charm:3, fitness:2, stress:-4}, true); next(); });
+    , {gains:{charm:3, fitness:2, stress:-4}}], next);
   }},
 ];
 /* ============================================================
@@ -1722,7 +1742,7 @@ const TALKS_HIGH = [
 function talkToSnape(){
   const a = S.stats.snape;
   const line = a>=300 ? pick(TALKS_HIGH) : a>=120 ? pick(TALKS_MID) : pick(TALKS_LOW);
-  say([line], ()=>{ applyGains({snape:2, stress:-4}, true); });
+  say([line, {gains:{snape:2, stress:-4}}]);
 }
 
 /* ============================================================
