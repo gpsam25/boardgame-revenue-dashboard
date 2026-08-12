@@ -157,6 +157,8 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
 .stat-fill.f-dark{background:linear-gradient(90deg,#3a2b52,#6b4d9e);}
 .stat-fill.f-stress{background:linear-gradient(90deg,#6c6f2a,#b0b23c);}
 .stat-fill.f-snape{background:linear-gradient(90deg,#1f5d3e,#2f7d52);}
+.stat-fill.f-ron{background:linear-gradient(90deg,#c2452f,#f08a8a);}
+.stat-fill.f-draco{background:linear-gradient(90deg,#7e8ca0,#d9a7c7);}
 .stat-val{font-size:13px;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums;}
 .main-actions{display:flex;gap:8px;margin-top:auto;padding-top:10px;flex-wrap:wrap;}
 .main-actions .btn{flex:1;min-width:120px;}
@@ -388,16 +390,18 @@ const STAT_DEFS = [
   {key:"dark",      name:"黑暗傾向", cls:"f-dark"},
   {key:"stress",    name:"壓　力", cls:"f-stress"},
   {key:"snape",     name:"教授好感", cls:"f-snape"},
+  {key:"loveRon",   name:"榮恩♥", cls:"f-ron"},
+  {key:"loveDraco", name:"馬份♥", cls:"f-draco"},
 ];
-const STAT_MAX = {magic:999,knowledge:999,fitness:999,charm:999,courage:999,dark:999,stress:120,snape:500};
+const STAT_MAX = {magic:999,knowledge:999,fitness:999,charm:999,courage:999,dark:999,stress:120,snape:500,loveRon:100,loveDraco:100};
 const STAT_NAME = Object.fromEntries(STAT_DEFS.map(d=>[d.key,d.name.replace(/　/g,"")]));
 STAT_NAME.money = "加隆";
 
 const HOUSES = {
-  gryffindor:{name:"葛來分多", c1:"#7f0909", c2:"#d4a017", bonus:{courage:25}},
-  slytherin: {name:"史萊哲林", c1:"#0f3d29", c2:"#b9c4c9", bonus:{magic:15,dark:5,snape:15}},
-  ravenclaw: {name:"雷文克勞", c1:"#1d3a6e", c2:"#8a5a2b", bonus:{knowledge:25}},
-  hufflepuff:{name:"赫夫帕夫", c1:"#a8860b", c2:"#2f2b28", bonus:{fitness:12,charm:12}},
+  gryffindor:{name:"葛來分多", c1:"#7f0909", c2:"#d4a017", bonus:{courage:35,fitness:10}},
+  slytherin: {name:"史萊哲林", c1:"#0f3d29", c2:"#b9c4c9", bonus:{magic:25,dark:10,snape:20,money:40}},
+  ravenclaw: {name:"雷文克勞", c1:"#1d3a6e", c2:"#8a5a2b", bonus:{knowledge:35,magic:10}},
+  hufflepuff:{name:"赫夫帕夫", c1:"#a8860b", c2:"#2f2b28", bonus:{fitness:20,charm:20,stress:-5}},
 };
 
 let S = null;
@@ -405,9 +409,9 @@ function newState(){
   return {
     house:null,
     monthIndex:0,           // 0 = 1991年9月，83 = 1998年8月
-    stats:{magic:30,knowledge:30,fitness:30,charm:25,courage:35,dark:5,stress:10,snape:20},
+    stats:{magic:30,knowledge:30,fitness:30,charm:25,courage:35,dark:5,stress:10,snape:20,loveRon:0,loveDraco:0},
     money:80,
-    flags:{sorted:false,quidditch:false,sickPending:false,metHermione:false,wandDream:false},
+    flags:{sorted:false,quidditch:false,sickPending:false,metHermione:false,wandDream:false,dating:null},
     onceEvents:[],
     schedule:[],
     repeat:null,   // 「連排兩個月」：下個月要重複的行程
@@ -772,6 +776,7 @@ function showChoices(choices){
       e.stopPropagation();
       dlg.cur = null; box.innerHTML = "";
       if(c.house){ S.house = c.house; refreshUI(); }
+      if(c.dating){ S.flags.dating = c.dating; }
       if(c.then) dlg.queue = c.then.concat(dlg.queue);
       if(c.effect) applyGains(c.effect, true);
       dlgNext();
@@ -896,7 +901,12 @@ function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }catch(
 function load(){
   try{
     const d = JSON.parse(localStorage.getItem(SAVE_KEY));
-    if(d && typeof d.monthIndex === "number") return d;
+    if(d && typeof d.monthIndex === "number"){
+      // 舊存檔相容：補上後來新增的欄位
+      if(d.stats.loveRon === undefined){ d.stats.loveRon = 0; d.stats.loveDraco = 0; }
+      if(d.flags.dating === undefined) d.flags.dating = null;
+      return d;
+    }
   }catch(e){}
   return null;
 }
@@ -924,7 +934,7 @@ function startNewGame(){
 function sortingCeremony(){
   say([
     {who:"narr", text:"大禮堂，燭光懸浮在夜空般的天花板下。\n破舊的分類帽被戴上了哈莉的頭。"},
-    {who:"hat", text:"哦呵……有趣，太有趣了。勇氣、才智、還有一顆倔強的心。\n還被那個魔藥學的傢伙養大——嘖，難辦。\n你自己說吧，小姑娘，你想去哪裡？",
+    {who:"hat", text:"哦呵……有趣，太有趣了。勇氣、才智、還有一顆倔強的心。\n還被那個魔藥學的傢伙養大——嘖，難辦。\n葛來分多鍛勇氣與體魄；史萊哲林授魔力、人脈與金加隆；雷文克勞增知識與巧思；赫夫帕夫養體能與好人緣。\n你自己說吧，小姑娘，你想去哪裡？",
       choices:[
         {label:"葛來分多！", then:[
           {who:"hat", text:"哈！和你父母一樣的選擇——葛來分多！！"},
@@ -1249,7 +1259,7 @@ const RANDOM_EVENTS = [
     say([
       {who:"ron", text:"巫師棋，來一盤？先說好，我可是從來沒輸過——輸的人請奶油啤酒！"},
       {who:"narr", text:"棋盤上殺得天昏地暗。榮恩的騎士砸碎了哈莉最後的城堡——但交誼廳的爐火旁，笑聲一直沒停。"},
-    ], ()=>{ applyGains({knowledge:3, stress:-10, charm:2}, true); next(); });
+    ], ()=>{ applyGains({knowledge:3, stress:-10, charm:2, loveRon:4}, true); next(); });
   }},
   {id:"draco-taunt", cond:()=>true, fn(next){
     say([
@@ -1257,12 +1267,12 @@ const RANDOM_EVENTS = [
         choices:[
           {label:"優雅地反擊", then:[
             {who:"hally", text:"至少我的零用錢是自己賺的，馬份。你的呢——爸爸這週匯了嗎？"},
-            {who:"narr", text:"圍觀的學生哄堂大笑。馬份漲紅著臉走了。"},
-          ], effect:{charm:6, courage:3}},
+            {who:"narr", text:"圍觀的學生哄堂大笑。馬份漲紅著臉走了——但轉角處，他偷偷回頭看了一眼。"},
+          ], effect:{charm:6, courage:3, loveDraco:4}},
           {label:"拔杖決鬥", then:[
             {who:"narr", text:"走廊上咒光交錯！哈莉的繳械咒把馬份的魔杖打飛出去——但巡邏的黑袍身影正好轉過轉角。"},
             {who:"snape", text:"兩位，各扣二十分。波特，握杖的手腕姿勢不錯。……我什麼都沒說。"},
-          ], effect:{magic:6, courage:5, snape:-3, stress:4}},
+          ], effect:{magic:6, courage:5, snape:-3, stress:4, loveDraco:3}},
         ]},
     ], next);
   }},
@@ -1352,10 +1362,123 @@ const RANDOM_EVENTS = [
     ], next);
   }},
   {id:"ball", once:true, cond:()=>schoolYearOf()>=4 && S.stats.charm>=150, fn(next){
+    const choices = [
+      {label:"和妙麗、露娜一起去", then:[
+        {who:"narr", text:"女孩們手挽著手走進會場，笑聲比水晶燈還亮。這一晚，不需要舞伴也足夠閃耀。"},
+      ], effect:{charm:12, stress:-8, snape:5}},
+    ];
+    if(S.stats.loveRon >= 40 && S.flags.dating !== "draco") choices.push(
+      {label:"邀請榮恩", then:[
+        {who:"ron", text:"我、我嗎？！……好！我這就去燙我媽寄來的禮服袍——拜託它千萬別有蕾絲！"},
+        {who:"narr", text:"禮服袍還是有蕾絲。但整晚的舞，他一次都沒踩到她的腳。"},
+      ], effect:{loveRon:12, charm:8, stress:-6, snape:5}});
+    if(S.stats.loveDraco >= 40 && S.flags.dating !== "ron") choices.push(
+      {label:"答應馬份的邀請", then:[
+        {who:"draco", text:"別誤會，波特。是父親說要注重社交形象。……手，給我。"},
+        {who:"narr", text:"開場華爾滋，全場的目光都聚在這對意外的舞伴身上。他的耳根一路紅到了脖子。"},
+      ], effect:{loveDraco:12, charm:8, stress:-6, snape:5}});
     say([
       {who:"narr", text:"三巫鬥法大賽的聖誕舞會。哈莉穿上禮服袍的那一刻，整個交誼廳安靜了一瞬。"},
-      {who:"snape", text:"（開舞前，他出現在會場邊，替她理了理歪掉的髮夾。）\n站直。你今晚……不會輸給任何人。"},
-    ], ()=>{ applyGains({charm:12, stress:-8, snape:5}, true); next(); });
+      {who:"snape", text:"（開舞前，他出現在會場邊，替她理了理歪掉的髮夾。）\n站直。你今晚……不會輸給任何人。", choices},
+    ], next);
+  }},
+  /* ---------- 戀愛事件：榮恩 ---------- */
+  {id:"ron-sweater", once:true, cond:()=>S.stats.loveRon>=30, fn(next){
+    say([
+      {who:"ron", text:"呃、這個給你。我媽織的……R 開頭，是、是「榮恩的朋友」的意思啦！"},
+      {who:"narr", text:"酒紅色的毛衣有點扎，卻暖得不可思議。"},
+    ], ()=>{ applyGains({loveRon:8, stress:-5}, true); next(); });
+  }},
+  {id:"ron-guard", once:true, cond:()=>S.stats.loveRon>=60, fn(next){
+    say([
+      {who:"narr", text:"魁地奇比賽，失控的搏格直衝哈莉而來——看台上的榮恩喊破了嗓子提醒她閃開，隔天完全失聲。"},
+      {who:"ron", text:"（沙啞）值、值得……你沒被砸到就好。"},
+    ], ()=>{ applyGains({loveRon:8, courage:2}, true); next(); });
+  }},
+  {id:"ron-confess", once:true, cond:()=>S.stats.loveRon>=80 && schoolYearOf()>=5 && !S.flags.dating, fn(next){
+    say([
+      {who:"narr", text:"魁地奇球場的看台上，只剩他們兩個人。榮恩的耳朵紅得和他的頭髮一個顏色。"},
+      {who:"ron", text:"哈莉。我知道你是「活下來的女孩」，全世界都認識你——\n但我喜歡的，是那個下棋會耍賴、吃餡餅會燙到舌頭的你。……做我女朋友，好嗎？",
+        choices:[
+          {label:"「好。」", then:[
+            {who:"narr", text:"他愣了整整三秒，然後歡呼著跳起來，差點從看台上栽下去。"},
+            {who:"snape", text:"（消息傳開後——）衛斯理。聽好，敢讓她掉一滴眼淚，我的坩堝永遠缺實驗材料。"},
+          ], effect:{loveRon:20, stress:-8, charm:3}, dating:"ron"},
+          {label:"「先當最好的朋友，好嗎？」", then:[
+            {who:"ron", text:"……嗯！朋友！最好的那種！\n（他笑得有點勉強，但還是把最後一塊餡餅分給了她。）"},
+          ], effect:{loveRon:-15, stress:4}},
+        ]},
+    ], next);
+  }},
+  /* ---------- 戀愛事件：馬份 ---------- */
+  {id:"draco-notes", once:true, cond:()=>S.stats.loveDraco>=30, fn(next){
+    say([
+      {who:"draco", text:"你上週缺課的筆記。……別誤會！只是看不慣有人拖低年級平均分而已。"},
+      {who:"narr", text:"筆記工整得驚人，重點處還細心地畫了線。（他絕對謄過不只一遍。）"},
+    ], ()=>{ applyGains({loveDraco:8, knowledge:2}, true); next(); });
+  }},
+  {id:"draco-tower", once:true, cond:()=>S.stats.loveDraco>=60, fn(next){
+    say([
+      {who:"draco", text:"（天文塔上撞見。）家族、聯姻、繼承人……有時候真羨慕你，波特。至少你能選自己的路。"},
+      {who:"hally", text:"你也可以。「路是走出來的」——這句話，是我教授說的。"},
+    ], ()=>{ applyGains({loveDraco:8, stress:-4}, true); next(); });
+  }},
+  {id:"draco-confess", once:true, cond:()=>S.stats.loveDraco>=80 && schoolYearOf()>=5 && !S.flags.dating, fn(next){
+    say([
+      {who:"narr", text:"天文塔的頂端。跩哥·馬份望著星空，罕見地沉默了很久。"},
+      {who:"draco", text:"我家的人會反對，你的教授會把我做成藥材，整個魔法界都會瘋掉。\n……但是波特，我盤點了所有反對的理由——沒有一條，贏得過「我喜歡你」。",
+        choices:[
+          {label:"牽住他的手", then:[
+            {who:"narr", text:"星光下，兩枚不同學院的徽章靠在了一起。"},
+            {who:"snape", text:"（消息傳開後——）……馬份？\n（長達十秒的沉默。）哼。至少他的魔藥成績，勉強配得上你。"},
+          ], effect:{loveDraco:20, stress:-8, charm:3}, dating:"draco"},
+          {label:"「給我一點時間。」", then:[
+            {who:"draco", text:"……馬份家的人最擅長等待。哼，別讓我等太久，波特。"},
+          ], effect:{loveDraco:-10, stress:4}},
+        ]},
+    ], next);
+  }},
+  /* ---------- 學院專屬事件 ---------- */
+  {id:"house-gry", cond:()=>S.house==="gryffindor", fn(next){
+    say([
+      {who:"narr", text:"葛來分多交誼廳之夜——衛斯理雙胞胎拉著哈莉試用新發明「打嗝糖」，整座塔樓笑到人像都在抖。"},
+    ], ()=>{ applyGains({stress:-8, courage:2}, true); next(); });
+  }},
+  {id:"house-gry2", once:true, cond:()=>S.house==="gryffindor", fn(next){
+    say([
+      {who:"narr", text:"深夜，一個迷路的一年級生在走廊哭。哈莉把自己的斗篷披在她身上，一路把她送回胖女士人像前。"},
+      {who:"narr", text:"「口令：勇氣。」——胖女士朝哈莉眨了眨眼：「妳很有葛來分多的樣子，親愛的。」"},
+    ], ()=>{ applyGains({courage:4, charm:2}, true); next(); });
+  }},
+  {id:"house-sly", cond:()=>S.house==="slytherin", fn(next){
+    say([
+      {who:"narr", text:"史萊哲林交誼廳的湖底之窗外，一條人魚緩緩游過，朝哈莉揮了揮手。\n綠色的光影裡，連呼吸都安靜了下來。"},
+    ], ()=>{ applyGains({magic:3, stress:-5}, true); next(); });
+  }},
+  {id:"house-sly2", once:true, cond:()=>S.house==="slytherin", fn(next){
+    say([
+      {who:"snape", text:"（院長訓話。）史萊哲林在外面受多少白眼，我們自己就要多團結。\n記住：野心不是罪，蛇也懂得取暖。……尤其是你，波特。別讓他們看扁。"},
+    ], ()=>{ applyGains({snape:5, courage:2}, true); next(); });
+  }},
+  {id:"house-rav", cond:()=>S.house==="ravenclaw", fn(next){
+    say([
+      {who:"narr", text:"雷文克勞塔的門環出題：「什麼東西，越分享越多？」\n哈莉想了想：「知識。」——銅門緩緩敞開，門後響起一片讚許的掌聲。"},
+    ], ()=>{ applyGains({knowledge:4, charm:2}, true); next(); });
+  }},
+  {id:"house-rav2", once:true, cond:()=>S.house==="ravenclaw", fn(next){
+    say([
+      {who:"narr", text:"午夜的天文觀測會。整個學院擠在塔頂看英仙座流星雨，有人低聲唸出每顆星的名字，像唸一首很長的詩。"},
+    ], ()=>{ applyGains({knowledge:3, magic:2, stress:2}, true); next(); });
+  }},
+  {id:"house-huf", cond:()=>S.house==="hufflepuff", fn(next){
+    say([
+      {who:"narr", text:"赫夫帕夫地下室飄著剛出爐的派香——廚房的家庭小精靈們最疼這群獾，永遠留一塊最大的給哈莉。"},
+    ], ()=>{ applyGains({stress:-8, charm:2}, true); next(); });
+  }},
+  {id:"house-huf2", once:true, cond:()=>S.house==="hufflepuff", fn(next){
+    say([
+      {who:"narr", text:"全學院的園藝日！大家一起替溫室翻土、給獾窩補漆，晚上累癱在一起喝熱蜂蜜牛奶。\n「在赫夫帕夫，沒有人是一個人。」"},
+    ], ()=>{ applyGains({charm:3, fitness:2, stress:-4}, true); next(); });
   }},
 ];
 /* ============================================================
@@ -1376,7 +1499,7 @@ const ACT_EVENTS = {
   dada:[
     {lines:[{who:"narr",text:"幻形怪衝出櫃子，變成了佛地魔的影子——哈莉深吸一口氣：「叱叱，荒唐！」\n黑影瞬間穿上了粉紅色的蓬蓬裙。全班大笑。"}], fx:{courage:3, stress:-2}},
     {lines:[{who:"draco",text:"決鬥社？好啊波特，讓你見識純血的實力——"},
-            {who:"narr",text:"三十秒後，馬份被自己的咒語反彈黏在了天花板上。"}], fx:{magic:2, courage:2}},
+            {who:"narr",text:"三十秒後，馬份被自己的咒語反彈黏在了天花板上。他堅稱那是戰術。"}], fx:{magic:2, courage:2, loveDraco:2}},
   ],
   transf:[
     {lines:[{who:"narr",text:"麥教授拿起哈莉變出的銀針，對著燭光看了看：「針眼工整。波特小姐，加十分。」\n（隔壁的魔藥教授聽說後冷哼了一聲，但嘴角是翹的。）"}], fx:{knowledge:3}},
@@ -1388,7 +1511,7 @@ const ACT_EVENTS = {
   ],
   dance:[
     {lines:[{who:"ron",text:"呃、那個，舞伴練習……我可以嗎？先說好我會踩到你的腳。"},
-            {who:"narr",text:"他真的踩了。八次。但兩個人笑到直不起腰。"}], fx:{charm:2, stress:-2}},
+            {who:"narr",text:"他真的踩了。八次。但兩個人笑到直不起腰。"}], fx:{charm:2, stress:-2, loveRon:3}},
     {lines:[{who:"narr",text:"禮儀老師當眾稱讚：「波特小姐的儀態，是我教過最出色的。」\n路過的石內卜：「哼。」（翻譯：那當然，也不看是誰養大的。）"}], fx:{charm:3}},
   ],
   tutor:[
@@ -1623,6 +1746,16 @@ const ENDINGS = [
   {id:"happy", title:"平凡而閃閃發光的日子", cond:()=>true,
    desc:"哈莉沒有成為傳說。她在霍格莫德開了一間小小的茶館，賣奶油啤酒和自己烤的獅子座星圖蛋糕。每週五打烊後，總有一位黑袍客人坐在窗邊的老位置。「本店招牌，安神花草茶。」「……比我教你的配方差遠了。」「那您還每週都來？」「…………續杯。」"},
 ];
+function loveEpilogue(){
+  const d = S.flags.dating, ron = S.stats.loveRon, dra = S.stats.loveDraco;
+  if(d === "ron" || (!d && ron >= 90))
+    return "【戀人・榮恩】婚禮上，衛斯理媽媽哭掉了三條手帕。石內卜送的新婚賀禮是一整櫃解毒劑，附字條：「嫁進一天三炸的家庭，用得上。——S.S.」";
+  if(d === "draco" || (!d && dra >= 90))
+    return "【戀人・跩哥】馬份莊園的訂婚宴上，氣氛微妙得能凝出冰。直到某位黑袍教授舉起酒杯，嘴角難得沒有下垂：「品味不錯。——我是說她。」";
+  if(Math.max(ron, dra) >= 50)
+    return "【青澀的悸動】有些沒說出口的心意，被夾進了畢業紀念冊裡。來日方長。";
+  return "";
+}
 function snapeEpilogue(a){
   if(a>=380) return "【監護人・賽佛勒斯：家人】十七年前那個雨夜接過的襁褓，如今已是他不再需要隱藏的驕傲。";
   if(a>=250) return "【監護人・賽佛勒斯：默默守護】他仍然毒舌、仍然板著臉，但哈莉知道，那件黑袍永遠會擋在她身前。";
@@ -1635,8 +1768,11 @@ function showEnding(){
   showScreen("screen-ending");
   $("end-portrait").innerHTML = hallySVG(3, S.house || "gryffindor");
   $("end-title").textContent = end.title;
+  const loveEp = loveEpilogue();
   $("end-desc").innerHTML =
-    `<p>${end.desc}</p><p style="margin-top:10px;color:var(--ink-soft);">${snapeEpilogue(st.snape)}</p>`;
+    `<p>${end.desc}</p>` +
+    (loveEp ? `<p style="margin-top:10px;">${loveEp}</p>` : "") +
+    `<p style="margin-top:10px;color:var(--ink-soft);">${snapeEpilogue(st.snape)}</p>`;
   const box = $("end-stats");
   box.innerHTML = "";
   STAT_DEFS.forEach(d=>{
